@@ -1,6 +1,6 @@
-# Sample Hardhat Project
+# Modular Signature Scheme Verification Algorithm
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+This algorithm supports flexibility with signature formats by accepting "bytes" as the signature data format and the algo is able to recognize the type of signature given and recover the signed address. It comes with a contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
 
 Try running some of the following tasks:
 
