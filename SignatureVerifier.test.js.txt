@@ -1,0 +1,46 @@
+const { ethers } = require("hardhat");
+const { expect } = require("chai");
+
+describe("SignatureVerifier", function () {
+  let verifier;
+  let signer;
+  let signedHash;
+
+  before(async function () {
+    const SignatureVerifier = await ethers.getContractFactory("SignatureVerifier");
+    verifier = await SignatureVerifier.deploy();
+    await verifier.deployed();
+
+    [signer] = await ethers.getSigners();
+    signedHash = ethers.utils.solidityKeccak256(["string"], ["Hello, Blockchain!"]);
+  });
+
+  it("Should verify a valid ECDSA signature", async function () {
+    const signature = await signer.signMessage(ethers.utils.arrayify(signedHash));
+    const sigBytes = ethers.utils.arrayify(signature);
+
+    const isValid = await verifier.verifySignature(
+      signer.address,
+      sigBytes,
+      signedHash,
+      0 // 0 for ECDSA
+    );
+    expect(isValid).to.be.true;
+  });
+
+  it("Should reject an invalid ECDSA signature", async function () {
+    const otherSigner = ethers.Wallet.createRandom();
+    const signature = await otherSigner.signMessage(ethers.utils.arrayify(signedHash));
+    const sigBytes = ethers.utils.arrayify(signature);
+
+    const isValid = await verifier.verifySignature(
+      signer.address,
+      sigBytes,
+      signedHash,
+      0 // ECDSA
+    );
+    expect(isValid).to.be.false;
+  });
+
+  // Add additional tests for Schnorr and other schemes as needed
+});

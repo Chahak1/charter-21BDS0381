@@ -1,0 +1,75 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract SignatureVerifier {
+    enum SignatureScheme { ECDSA, Schnorr }
+
+    /// @notice Verifies a signature based on the provided scheme type
+    /// @param signer The address of the expected signer
+    /// @param signature The signature in bytes
+    /// @param signedHash The hash of the signed message
+    /// @param schemeType The signature scheme (0 for ECDSA, 1 for Schnorr)
+    /// @return isValid True if the signature is valid, false otherwise
+    function verifySignature(
+        address signer,
+        bytes memory signature,
+        bytes32 signedHash,
+        SignatureScheme schemeType
+    ) public pure returns (bool isValid) {
+        if (schemeType == SignatureScheme.ECDSA) {
+            return _verifyECDSA(signer, signature, signedHash);
+        } else if (schemeType == SignatureScheme.Schnorr) {
+            return _verifySchnorr(signer, signature, signedHash);
+        }
+        // Unsupported signature scheme
+        return false;
+    }
+
+    /// @dev Verifies an ECDSA signature
+    function _verifyECDSA(
+        address signer,
+        bytes memory signature,
+        bytes32 signedHash
+    ) internal pure returns (bool) {
+        if (signature.length != 65) return false;
+
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+
+        // Parse the signature into r, s, and v
+        assembly {
+            r := mload(add(signature, 0x20))
+            s := mload(add(signature, 0x40))
+            v := byte(0, mload(add(signature, 0x60)))
+        }
+
+        // Check v is in the correct range
+        if (v < 27) v += 27;
+        if (v != 27 && v != 28) return false;
+
+        // Recover the signer address and compare it to the provided address
+        return ecrecover(signedHash, v, r, s) == signer;
+    }
+
+    /// @dev Verifies a Schnorr signature (example implementation)
+    function _verifySchnorr(
+        address signer,
+        bytes memory signature,
+        bytes32 signedHash
+    ) internal pure returns (bool) {
+        if (signature.length != 64) return false;
+
+        bytes32 r;
+        bytes32 s;
+
+        // Parse the Schnorr signature into r and s
+        assembly {
+            r := mload(add(signature, 0x20))
+            s := mload(add(signature, 0x40))
+        }
+
+        bytes32 expectedPubKeyHash = keccak256(abi.encodePacked(signer));
+        return keccak256(abi.encodePacked(r, s, signedHash)) == expectedPubKeyHash;
+    }
+}
