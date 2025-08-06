@@ -33,15 +33,32 @@ async function getStockData(symbol) {
     
     const data = await readCSVFile(filePath);
     
-    // Transform data to match expected format
-    const transformedData = data.map(row => ({
-      timestamp: row.timestamp,
-      open: parseFloat(row.open),
-      high: parseFloat(row.high),
-      low: parseFloat(row.low),
-      close: parseFloat(row.close),
-      volume: parseInt(row.volume)
-    }));
+    // Transform data to match expected format and handle different date formats
+    const transformedData = data.map(row => {
+      let timestamp = row.timestamp;
+      
+      // Handle DD-MM-YYYY format (convert to YYYY-MM-DD)
+      if (timestamp.match(/^\d{2}-\d{2}-\d{4}$/)) {
+        const [day, month, year] = timestamp.split('-');
+        timestamp = `${year}-${month}-${day}`;
+      }
+      
+      // Handle DD-MM-YYYY HH:MM format (convert to YYYY-MM-DD HH:MM:00)
+      if (timestamp.match(/^\d{2}-\d{2}-\d{4} \d{2}:\d{2}$/)) {
+        const [datePart, timePart] = timestamp.split(' ');
+        const [day, month, year] = datePart.split('-');
+        timestamp = `${year}-${month}-${day} ${timePart}:00`;
+      }
+      
+      return {
+        timestamp: timestamp,
+        open: parseFloat(row.open),
+        high: parseFloat(row.high),
+        low: parseFloat(row.low),
+        close: parseFloat(row.close),
+        volume: parseInt(row.volume)
+      };
+    });
     
     // Sort data by timestamp to ensure proper order
     transformedData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
