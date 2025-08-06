@@ -3,6 +3,13 @@ import React from 'react';
 export default function ChartToolbar({ onRangeChange, currentRange }) {
   const timeRanges = ['1D', '1W', '1M', '3M', '1Y', 'ALL'];
 
+  console.log('ChartToolbar render:', { currentRange });
+
+  const handleRangeChange = (range) => {
+    console.log('Range change requested:', range);
+    onRangeChange(range);
+  };
+
   return (
     <div className="chart-toolbar">
       <div className="toolbar-group">
@@ -11,7 +18,7 @@ export default function ChartToolbar({ onRangeChange, currentRange }) {
           <button
             key={range}
             className={`toolbar-button ${currentRange === range ? 'active' : ''}`}
-            onClick={() => onRangeChange(range)}
+            onClick={() => handleRangeChange(range)}
           >
             {range}
           </button>

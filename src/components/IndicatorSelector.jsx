@@ -3,11 +3,18 @@ import React from 'react';
 export default function IndicatorSelector({ indicators, setIndicators }) {
   const availableIndicators = ['SMA', 'EMA', 'RSI', 'MACD', 'VWAP', 'Bollinger Bands'];
 
+  console.log('IndicatorSelector render:', { indicators });
+
   const toggleIndicator = (indicator) => {
+    console.log('Toggling indicator:', indicator);
     if (indicators.includes(indicator)) {
-      setIndicators(indicators.filter(ind => ind !== indicator));
+      const newIndicators = indicators.filter(ind => ind !== indicator);
+      console.log('Removing indicator, new list:', newIndicators);
+      setIndicators(newIndicators);
     } else {
-      setIndicators([...indicators, indicator]);
+      const newIndicators = [...indicators, indicator];
+      console.log('Adding indicator, new list:', newIndicators);
+      setIndicators(newIndicators);
     }
   };
 

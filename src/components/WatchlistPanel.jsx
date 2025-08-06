@@ -85,7 +85,10 @@ export default function WatchlistPanel({ onSelect, selected }) {
         <div
           key={stock.symbol}
           className={`watchlist-item ${selected === stock.symbol ? 'selected' : ''}`}
-          onClick={() => onSelect(stock.symbol)}
+          onClick={() => {
+            console.log('Stock selected:', stock.symbol);
+            onSelect(stock.symbol);
+          }}
         >
           <div>
             <div className="stock-symbol">{stock.symbol}</div>
