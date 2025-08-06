@@ -9,6 +9,7 @@ export default function App() {
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   const handleFullScreenToggle = () => {
+    console.log("App: handleFullScreenToggle called, current isFullScreen:", isFullScreen);
     setIsFullScreen(!isFullScreen);
   };
 

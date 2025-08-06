@@ -13,6 +13,8 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
 
 
 
+
+
   useEffect(() => {
     console.log("Fetching stock data for", symbol, "with range", range);
 
