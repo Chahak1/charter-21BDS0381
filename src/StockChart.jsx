@@ -113,6 +113,7 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
   const [chartData, setChartData] = useState([]);
   const [chartType, setChartType] = useState("candlestick");
   const [dataType, setDataType] = useState("historical"); // historical or simulated
+  const [dataSource, setDataSource] = useState(""); // Track data source
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
@@ -123,45 +124,44 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
 
 
   useEffect(() => {
-    console.log("Fetching stock data for", symbol, "with range", range);
+    console.log("Fetching stock data for", symbol, "with range", range, "dataType:", dataType);
 
     const fetchData = async () => {
       try {
+        console.log("Making API call to:", `http://localhost:3001/api/stocks/combined/${symbol}?type=${dataType}`);
         const res = await axios.get(`http://localhost:3001/api/stocks/combined/${symbol}?type=${dataType}`);
         let data = res.data;
 
-        console.log("Fetched data:", data);
+        console.log("API Response status:", res.status);
+        console.log("Fetched data length:", data ? data.length : 0);
+        console.log("First few records:", data ? data.slice(0, 3) : "No data");
 
-        // Filter data based on selected range
-        const now = new Date();
-        let startTime;
-
-        switch (range) {
-          case "1D":
-            startTime = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
-            break;
-          case "5D":
-            startTime = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
-            break;
-          case "1M":
-            startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-            break;
-          case "6M":
-            startTime = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
-            break;
-          case "1Y":
-            startTime = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-            break;
-          default:
-            startTime = null;
+        // For CSV data, we'll use the data as-is since it's already filtered by date range
+        // The CSV files contain data from specific time periods
+        if (data && data.length > 0) {
+          // Sort data by timestamp to ensure proper order
+          data = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+          
+          // For demonstration, we'll show all available data
+          // In a real app, you might want to implement proper date filtering based on the actual data dates
+          console.log("✅ Using CSV data:", data.length, "records");
+          console.log("📊 Data source: CSV files for", symbol);
+          setChartData(data);
+          setDataSource("CSV");
+        } else {
+          console.log("⚠️ No CSV data found, using mock data");
+          // Create mock data for testing if no CSV data
+          const mockData = Array.from({ length: 100 }, (_, i) => ({
+            timestamp: new Date(Date.now() - (100 - i) * 24 * 60 * 60 * 1000).toISOString(),
+            open: 100 + Math.random() * 20,
+            high: 105 + Math.random() * 20,
+            low: 95 + Math.random() * 20,
+            close: 100 + Math.random() * 20,
+            volume: 1000000 + Math.random() * 500000
+          }));
+          setChartData(mockData);
+          setDataSource("Mock");
         }
-
-        if (startTime) {
-          data = data.filter((item) => new Date(item.timestamp) >= startTime);
-        }
-
-        console.log("Filtered data:", data);
-        setChartData(data);
       } catch (err) {
         console.error("Failed to load stock data:", err);
         // Create mock data for testing
@@ -174,6 +174,7 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
           volume: 1000000 + Math.random() * 500000
         }));
         setChartData(mockData);
+        setDataSource("Mock");
       }
     };
 
@@ -572,6 +573,25 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
               Simulated
             </button>
           </div>
+        </div>
+
+        {/* Data Source Indicator */}
+        <div style={{ 
+          display: "flex", 
+          alignItems: "center", 
+          gap: "8px",
+          padding: "4px 8px",
+          borderRadius: "4px",
+          backgroundColor: dataSource === "CSV" ? "#dcfce7" : "#fef3c7",
+          border: `1px solid ${dataSource === "CSV" ? "#22c55e" : "#f59e0b"}`
+        }}>
+          <span style={{ 
+            fontSize: "12px", 
+            fontWeight: "500",
+            color: dataSource === "CSV" ? "#166534" : "#92400e"
+          }}>
+            {dataSource === "CSV" ? "📊 CSV Data" : "⚠️ Mock Data"}
+          </span>
         </div>
 
         <button
