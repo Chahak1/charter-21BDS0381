@@ -9,6 +9,9 @@
     "build": "cd client && npm run build",
     "dev:both": "concurrently \"npm run dev\" \"npm run client\"",
     "install:all": "npm install && cd client && npm install",
+    "setup": "node setup-data.js",
+    "setup:start": "npm run setup && npm start",
+    "setup:dev": "npm run setup && npm run dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["stock", "chart", "react", "express", "finance"],

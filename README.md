@@ -60,7 +60,14 @@ npm install
 cd ..
 ```
 
-### 2. Start the Application
+### 2. Setup Data Files (Important!)
+
+```bash
+# Setup data files for cross-platform compatibility
+npm run setup
+```
+
+### 3. Start the Application
 
 #### Option A: Development Mode (Recommended)
 ```bash
@@ -68,7 +75,13 @@ cd ..
 npm run dev:both
 ```
 
-#### Option B: Start Separately
+#### Option B: Start with Setup (if data issues)
+```bash
+# Setup data and start development server
+npm run setup:dev
+```
+
+#### Option C: Start Separately
 ```bash
 # Terminal 1: Start backend server
 npm run dev
@@ -77,7 +90,7 @@ npm run dev
 npm run client
 ```
 
-### 3. Access the Application
+### 4. Access the Application
 
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:3001
@@ -103,6 +116,9 @@ npm run client
 - `npm start` - Start production server
 - `npm run dev` - Start development server with nodemon
 - `npm run dev:both` - Start both backend and frontend
+- `npm run setup` - Setup data files for cross-platform compatibility
+- `npm run setup:start` - Setup data and start production server
+- `npm run setup:dev` - Setup data and start development server
 - `npm run install:all` - Install all dependencies
 
 ### Frontend Scripts
@@ -171,7 +187,9 @@ This project is licensed under the ISC License.
 1. **Port conflicts**: Ensure ports 3000 and 3001 are available
 2. **Dependencies**: Run `npm run install:all` to install all dependencies
 3. **Data not loading**: Check that CSV files exist in the `data/` directory
-4. **CORS issues**: Backend includes CORS middleware for development
+4. **File not found errors**: Run `npm run setup` to ensure both uppercase and lowercase CSV files exist
+5. **CORS issues**: Backend includes CORS middleware for development
+6. **Windows/Linux file naming**: The server now automatically checks for both `AAPL.csv` and `aapl.csv` formats
 
 ### Getting Help
 

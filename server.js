@@ -43,12 +43,36 @@ function readCSV(filePath) {
 // Stock routes
 app.get('/api/stocks/:symbol', async (req, res) => {
   try {
-    const symbol = req.params.symbol.toLowerCase();
-    const filePath = path.join(baseDataDir, `${symbol}.csv`);
+    const symbol = req.params.symbol;
+    
+    // Try multiple file name variations
+    const possiblePaths = [
+      path.join(baseDataDir, `${symbol.toLowerCase()}.csv`),
+      path.join(baseDataDir, `${symbol.toUpperCase()}.csv`),
+      path.join(baseDataDir, `${symbol}.csv`)
+    ];
+    
+    let filePath = null;
+    let data = [];
+    
+    // Find the first existing file
+    for (const possiblePath of possiblePaths) {
+      console.log(`Checking for file: ${possiblePath}`);
+      if (fs.existsSync(possiblePath)) {
+        filePath = possiblePath;
+        console.log(`Found file: ${filePath}`);
+        break;
+      }
+    }
+    
+    if (!filePath) {
+      console.log(`No data file found for symbol: ${symbol}`);
+      console.log(`Checked paths:`, possiblePaths);
+      return res.status(404).json({ error: `No data found for symbol: ${symbol}` });
+    }
     
     console.log(`Fetching data for ${symbol} from ${filePath}`);
-    
-    const data = await readCSV(filePath);
+    data = await readCSV(filePath);
     
     if (data.length === 0) {
       return res.status(404).json({ error: `No data found for symbol: ${symbol}` });
@@ -64,12 +88,36 @@ app.get('/api/stocks/:symbol', async (req, res) => {
 // Get combined data (for backward compatibility with existing frontend)
 app.get('/api/stocks/combined/:symbol', async (req, res) => {
   try {
-    const symbol = req.params.symbol.toLowerCase();
-    const filePath = path.join(baseDataDir, `${symbol}.csv`);
+    const symbol = req.params.symbol;
+    
+    // Try multiple file name variations
+    const possiblePaths = [
+      path.join(baseDataDir, `${symbol.toLowerCase()}.csv`),
+      path.join(baseDataDir, `${symbol.toUpperCase()}.csv`),
+      path.join(baseDataDir, `${symbol}.csv`)
+    ];
+    
+    let filePath = null;
+    let data = [];
+    
+    // Find the first existing file
+    for (const possiblePath of possiblePaths) {
+      console.log(`Checking for file: ${possiblePath}`);
+      if (fs.existsSync(possiblePath)) {
+        filePath = possiblePath;
+        console.log(`Found file: ${filePath}`);
+        break;
+      }
+    }
+    
+    if (!filePath) {
+      console.log(`No data file found for symbol: ${symbol}`);
+      console.log(`Checked paths:`, possiblePaths);
+      return res.status(404).json({ error: `No data found for symbol: ${symbol}` });
+    }
     
     console.log(`Fetching combined data for ${symbol} from ${filePath}`);
-    
-    const data = await readCSV(filePath);
+    data = await readCSV(filePath);
     
     if (data.length === 0) {
       return res.status(404).json({ error: `No data found for symbol: ${symbol}` });
@@ -85,10 +133,22 @@ app.get('/api/stocks/combined/:symbol', async (req, res) => {
 // Get list of available stocks
 app.get('/api/stocks', (req, res) => {
   try {
+    console.log(`Reading data directory: ${baseDataDir}`);
+    
+    if (!fs.existsSync(baseDataDir)) {
+      console.log(`Data directory does not exist: ${baseDataDir}`);
+      return res.json([]);
+    }
+    
     const files = fs.readdirSync(baseDataDir)
       .filter(file => file.endsWith('.csv'))
-      .map(file => file.replace('.csv', '').toUpperCase());
+      .map(file => {
+        const symbol = file.replace('.csv', '').toUpperCase();
+        console.log(`Found stock file: ${file} -> ${symbol}`);
+        return symbol;
+      });
     
+    console.log(`Available stocks: ${files.join(', ')}`);
     res.json(files);
   } catch (error) {
     console.error('Error listing stocks:', error);
