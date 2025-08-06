@@ -1,11 +1,14 @@
 import React from "react";
+
 const INDICATORS = ["SMA", "EMA", "RSI", "MACD", "VWAP", "BB"];
+
 export default function IndicatorSelector({ indicators, setIndicators }) {
   function toggle(ind) {
     setIndicators(prev =>
       prev.includes(ind) ? prev.filter(i=>i!==ind) : [...prev, ind]
     );
   }
+  
   return (
     <div style={{display:"flex", alignItems:"center", gap:"8px"}}>
       {INDICATORS.map((ind) =>
