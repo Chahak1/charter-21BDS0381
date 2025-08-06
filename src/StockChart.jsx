@@ -3,10 +3,9 @@ import axios from "axios";
 import Chart from "chart.js/auto";
 import { sma, ema, rsi, macd, vwap, bollingerBands } from "./indicators";
 
-export default function StockChart({ symbol, indicators, range }) {
+export default function StockChart({ symbol, indicators, range, isFullScreen, setIsFullScreen }) {
   const [chartData, setChartData] = useState([]);
   const [chartType, setChartType] = useState("candlestick");
-  const [isFullScreen, setIsFullScreen] = useState(false);
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
@@ -196,6 +195,15 @@ export default function StockChart({ symbol, indicators, range }) {
     };
   }, [chartData, indicators, chartType, symbol]);
 
+  // Handle chart resize when full screen changes
+  useEffect(() => {
+    if (chartInstance.current) {
+      setTimeout(() => {
+        chartInstance.current.resize();
+      }, 100);
+    }
+  }, [isFullScreen]);
+
   // RSI Chart
   const renderRSI = () => {
     if (!indicators.includes("RSI") || !chartData.length) return null;
@@ -319,7 +327,7 @@ export default function StockChart({ symbol, indicators, range }) {
   return (
     <div style={{ 
       height: isFullScreen ? "100vh" : "100%", 
-      width: "100%",
+      width: isFullScreen ? "100vw" : "100%",
       position: isFullScreen ? "fixed" : "relative",
       top: isFullScreen ? 0 : "auto",
       left: isFullScreen ? 0 : "auto",
@@ -404,7 +412,7 @@ export default function StockChart({ symbol, indicators, range }) {
       </div>
 
       {/* Main Chart */}
-      <div style={{ height: "400px", padding: "20px" }}>
+      <div style={{ height: isFullScreen ? "calc(100vh - 200px)" : "400px", padding: "20px" }}>
         <canvas ref={chartRef} />
       </div>
 

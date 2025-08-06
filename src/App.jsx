@@ -6,16 +6,24 @@ import "./App.css";
 
 export default function App() {
   const [selectedStock, setSelectedStock] = useState("AAPL");
+  const [isFullScreen, setIsFullScreen] = useState(false);
+
   return (
     <div className="app-root" style={{display:"flex",height:"100vh"}}>
       <main style={{ flex: 1, display: "flex" }}>
         <div style={{ flex: 3, flexDirection: "column" }}>
-          <ChartContainer selectedStock={selectedStock} />
+          <ChartContainer 
+            selectedStock={selectedStock} 
+            isFullScreen={isFullScreen}
+            setIsFullScreen={setIsFullScreen}
+          />
         </div>
-        <aside style={{ flex: 1, minWidth: "340px", borderLeft: "1px solid #eee" }}>
-          <WatchlistPanel onSelect={setSelectedStock} selected={selectedStock} />
-          <StockStatsPanel symbol={selectedStock} />
-        </aside>
+        {!isFullScreen && (
+          <aside style={{ flex: 1, minWidth: "340px", borderLeft: "1px solid #eee" }}>
+            <WatchlistPanel onSelect={setSelectedStock} selected={selectedStock} />
+            <StockStatsPanel symbol={selectedStock} />
+          </aside>
+        )}
       </main>
     </div>
   );

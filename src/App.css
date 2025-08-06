@@ -24,3 +24,17 @@ button:hover {
 button:active {
   transform: translateY(0);
 }
+
+/* Full screen transitions */
+.app-root {
+  transition: all 0.3s ease;
+}
+
+/* Ensure smooth transitions for full screen mode */
+main {
+  transition: all 0.3s ease;
+}
+
+aside {
+  transition: all 0.3s ease;
+}
