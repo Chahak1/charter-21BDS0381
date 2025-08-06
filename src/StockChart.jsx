@@ -109,10 +109,9 @@ function bollingerBands(data, period = 20, stdDev = 2) {
   return { upperBand, middleBand: smaValues, lowerBand };
 }
 
-export default function StockChart({ symbol, indicators, range, isFullScreen, onFullScreenToggle }) {
+export default function StockChart({ symbol, indicators, range, dataType, setDataType, isFullScreen, onFullScreenToggle }) {
   const [chartData, setChartData] = useState([]);
   const [chartType, setChartType] = useState("candlestick");
-  const [dataType, setDataType] = useState("historical"); // historical or simulated
   const [dataSource, setDataSource] = useState(""); // Track data source
   const chartRef = useRef(null);
   const chartInstance = useRef(null);

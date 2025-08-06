@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-export default function StockStatsPanel({ symbol }) {
+export default function StockStatsPanel({ symbol, dataType = "historical" }) {
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -11,8 +11,8 @@ export default function StockStatsPanel({ symbol }) {
       
       setLoading(true);
       try {
-        // Fetch historical data to calculate stats
-        const response = await axios.get(`http://localhost:3001/api/stocks/historical/${symbol}`);
+        // Fetch data based on the selected data type (historical or simulated)
+        const response = await axios.get(`http://localhost:3001/api/stocks/${dataType}/${symbol}`);
         const data = response.data;
         
         if (data && data.length > 0) {
@@ -53,7 +53,7 @@ export default function StockStatsPanel({ symbol }) {
     };
 
     fetchStockStats();
-  }, [symbol]);
+  }, [symbol, dataType]);
 
   if (loading) {
     return (

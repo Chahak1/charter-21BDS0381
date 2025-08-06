@@ -11,6 +11,7 @@ export default function App() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [indicators, setIndicators] = useState(["SMA", "EMA", "RSI", "MACD", "BB"]);
   const [range, setRange] = useState("1D");
+  const [dataType, setDataType] = useState("historical"); // NEW: Track data type
   const [availableSymbols, setAvailableSymbols] = useState([]);
 
   useEffect(() => {
@@ -113,6 +114,8 @@ export default function App() {
               onFullScreenToggle={handleFullScreenToggle}
               indicators={indicators}
               range={range}
+              dataType={dataType}
+              setDataType={setDataType}
             />
           </div>
           {!isFullScreen && (
@@ -120,7 +123,7 @@ export default function App() {
               style={{ flex: 1, minWidth: "340px", borderLeft: "1px solid #eee" }}
             >
               <WatchlistPanel onSelect={setSelectedStock} selected={selectedStock} />
-              <StockStatsPanel symbol={selectedStock} />
+              <StockStatsPanel symbol={selectedStock} dataType={dataType} />
             </aside>
           )}
         </div>
