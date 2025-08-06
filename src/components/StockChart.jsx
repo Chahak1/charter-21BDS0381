@@ -1,26 +1,46 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createChart } from 'lightweight-charts';
-import { sma, ema, rsi, macd, vwap } from '../utils/indicators';
+import { sma, ema, vwap } from '../utils/indicators';
 import axios from 'axios';
 import io from 'socket.io-client';
 
 export default function StockChart({ symbol, indicators, range }) {
   const chartContainerRef = useRef();
-  const chart = useRef();
-  const candlestickSeries = useRef();
-  const volumeSeries = useRef();
-  const indicatorSeries = useRef({});
-  const socket = useRef();
+  const chartRef = useRef(null);
+  const candlestickSeriesRef = useRef(null);
+  const volumeSeriesRef = useRef(null);
+  const indicatorSeriesRef = useRef({});
+  const socketRef = useRef(null);
+  
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [chartInitialized, setChartInitialized] = useState(false);
 
-  // Initialize chart
+  // Convert API data to chart format
+  const convertDataForChart = (apiData) => {
+    return apiData.map(item => {
+      const timestamp = item.timestamp.includes(' ') 
+        ? Math.floor(new Date(item.timestamp).getTime() / 1000)
+        : Math.floor(new Date(item.timestamp).getTime() / 1000);
+      
+      return {
+        time: timestamp,
+        open: parseFloat(item.open),
+        high: parseFloat(item.high),
+        low: parseFloat(item.low),
+        close: parseFloat(item.close),
+        volume: parseInt(item.volume)
+      };
+    }).sort((a, b) => a.time - b.time);
+  };
+
+  // Initialize chart only once
   useEffect(() => {
-    if (!chartContainerRef.current) return;
+    if (!chartContainerRef.current || chartRef.current) return;
 
+    console.log('Initializing chart...');
+    
     try {
-      chart.current = createChart(chartContainerRef.current, {
+      const chart = createChart(chartContainerRef.current, {
         width: chartContainerRef.current.clientWidth,
         height: chartContainerRef.current.clientHeight,
         layout: {
@@ -45,7 +65,7 @@ export default function StockChart({ symbol, indicators, range }) {
       });
 
       // Create candlestick series
-      candlestickSeries.current = chart.current.addCandlestickSeries({
+      const candlestickSeries = chart.addCandlestickSeries({
         upColor: '#4caf50',
         downColor: '#f44336',
         borderUpColor: '#4caf50',
@@ -55,7 +75,7 @@ export default function StockChart({ symbol, indicators, range }) {
       });
 
       // Create volume series
-      volumeSeries.current = chart.current.addHistogramSeries({
+      const volumeSeries = chart.addHistogramSeries({
         color: '#26a69a',
         priceFormat: {
           type: 'volume',
@@ -67,12 +87,17 @@ export default function StockChart({ symbol, indicators, range }) {
         },
       });
 
-      setChartInitialized(true);
+      // Store references
+      chartRef.current = chart;
+      candlestickSeriesRef.current = candlestickSeries;
+      volumeSeriesRef.current = volumeSeries;
+
+      console.log('Chart initialized successfully');
 
       // Handle resize
       const handleResize = () => {
-        if (chart.current && chartContainerRef.current) {
-          chart.current.applyOptions({
+        if (chartRef.current && chartContainerRef.current) {
+          chartRef.current.applyOptions({
             width: chartContainerRef.current.clientWidth,
             height: chartContainerRef.current.clientHeight,
           });
@@ -83,95 +108,28 @@ export default function StockChart({ symbol, indicators, range }) {
 
       return () => {
         window.removeEventListener('resize', handleResize);
-        if (chart.current) {
-          chart.current.remove();
-          chart.current = null;
+        if (chartRef.current) {
+          chartRef.current.remove();
+          chartRef.current = null;
+          candlestickSeriesRef.current = null;
+          volumeSeriesRef.current = null;
+          indicatorSeriesRef.current = {};
         }
-        setChartInitialized(false);
       };
     } catch (error) {
       console.error('Error initializing chart:', error);
     }
   }, []);
 
-  // Initialize WebSocket connection
+  // Load data when symbol or range changes
   useEffect(() => {
-    if (!symbol) return;
-
-    try {
-      socket.current = io('http://localhost:3001');
-      
-      socket.current.on('connect', () => {
-        console.log('Connected to WebSocket server');
-        socket.current.emit('subscribe', [symbol]);
-      });
-
-      socket.current.on('priceUpdate', (data) => {
-        if (data.symbol === symbol && candlestickSeries.current) {
-          const timestamp = Math.floor(new Date(data.data.timestamp).getTime() / 1000);
-          const updatedData = {
-            time: timestamp,
-            open: data.data.open,
-            high: data.data.high,
-            low: data.data.low,
-            close: data.data.close
-          };
-          
-          candlestickSeries.current.update(updatedData);
-          
-          if (volumeSeries.current) {
-            volumeSeries.current.update({
-              time: timestamp,
-              value: data.data.volume,
-              color: data.data.close >= data.data.open ? '#4caf5080' : '#f4433680'
-            });
-          }
-        }
-      });
-
-      socket.current.on('connect_error', (error) => {
-        console.error('WebSocket connection error:', error);
-      });
-
-      return () => {
-        if (socket.current) {
-          socket.current.disconnect();
-          socket.current = null;
-        }
-      };
-    } catch (error) {
-      console.error('Error setting up WebSocket:', error);
-    }
-  }, [symbol]);
-
-  // Convert API data to chart format
-  const convertDataForChart = (apiData) => {
-    return apiData.map(item => {
-      const timestamp = item.timestamp.includes(' ') 
-        ? Math.floor(new Date(item.timestamp).getTime() / 1000)
-        : Math.floor(new Date(item.timestamp).getTime() / 1000);
-      
-      return {
-        time: timestamp,
-        open: parseFloat(item.open),
-        high: parseFloat(item.high),
-        low: parseFloat(item.low),
-        close: parseFloat(item.close),
-        volume: parseInt(item.volume)
-      };
-    }).sort((a, b) => a.time - b.time);
-  };
-
-  // Load data from API
-  useEffect(() => {
-    if (!symbol || !chartInitialized) return;
+    if (!symbol || !chartRef.current) return;
 
     const fetchData = async () => {
       setLoading(true);
       try {
         console.log('Fetching data for', symbol, 'with range', range);
         
-        // Fetch combined historical and simulated data
         const response = await axios.get(`http://localhost:3001/api/stocks/combined/${symbol}`);
         let apiData = response.data;
         
@@ -207,20 +165,23 @@ export default function StockChart({ symbol, indicators, range }) {
         
         console.log('Filtered data:', apiData.length, 'records');
         
-        const chartData = convertDataForChart(apiData);
-        setChartData(chartData);
+        const formattedData = convertDataForChart(apiData);
+        setChartData(formattedData);
         
-        if (candlestickSeries.current && chartData.length > 0) {
-          candlestickSeries.current.setData(chartData);
+        // Set chart data
+        if (candlestickSeriesRef.current && formattedData.length > 0) {
+          candlestickSeriesRef.current.setData(formattedData);
+          console.log('Candlestick data set successfully');
         }
         
-        if (volumeSeries.current && chartData.length > 0) {
-          const volumeData = chartData.map(item => ({
+        if (volumeSeriesRef.current && formattedData.length > 0) {
+          const volumeData = formattedData.map(item => ({
             time: item.time,
             value: item.volume,
             color: item.close >= item.open ? '#4caf5080' : '#f4433680'
           }));
-          volumeSeries.current.setData(volumeData);
+          volumeSeriesRef.current.setData(volumeData);
+          console.log('Volume data set successfully');
         }
         
         setLoading(false);
@@ -231,102 +192,153 @@ export default function StockChart({ symbol, indicators, range }) {
     };
 
     fetchData();
-  }, [symbol, range, chartInitialized]);
+  }, [symbol, range]);
 
   // Update indicators
   useEffect(() => {
-    if (!chartData.length || loading || !chartInitialized || !chart.current) return;
+    if (!chartData.length || loading || !chartRef.current) return;
+
+    console.log('Updating indicators:', indicators);
+
+    // Clear existing indicator series
+    Object.values(indicatorSeriesRef.current).forEach(series => {
+      if (series && chartRef.current) {
+        try {
+          chartRef.current.removeSeries(series);
+        } catch (e) {
+          console.warn('Error removing series:', e);
+        }
+      }
+    });
+    indicatorSeriesRef.current = {};
+
+    // Add new indicators
+    indicators.forEach(indicator => {
+      if (!chartRef.current) return;
+
+      let indicatorData = [];
+      let series = null;
+
+      try {
+        switch (indicator) {
+          case 'SMA':
+            indicatorData = sma(chartData, 20).map((value, index) => ({
+              time: chartData[index].time,
+              value: value
+            })).filter(item => item.value !== null && !isNaN(item.value));
+            
+            if (indicatorData.length > 0) {
+              series = chartRef.current.addLineSeries({
+                color: '#ff9800',
+                lineWidth: 2,
+                title: 'SMA(20)'
+              });
+              series.setData(indicatorData);
+              indicatorSeriesRef.current[indicator] = series;
+              console.log('SMA indicator added');
+            }
+            break;
+
+          case 'EMA':
+            indicatorData = ema(chartData, 20).map((value, index) => ({
+              time: chartData[index].time,
+              value: value
+            })).filter(item => item.value !== null && !isNaN(item.value));
+            
+            if (indicatorData.length > 0) {
+              series = chartRef.current.addLineSeries({
+                color: '#2196f3',
+                lineWidth: 2,
+                title: 'EMA(20)'
+              });
+              series.setData(indicatorData);
+              indicatorSeriesRef.current[indicator] = series;
+              console.log('EMA indicator added');
+            }
+            break;
+
+          case 'VWAP':
+            indicatorData = vwap(chartData).map((value, index) => ({
+              time: chartData[index].time,
+              value: value
+            })).filter(item => item.value !== null && !isNaN(item.value));
+            
+            if (indicatorData.length > 0) {
+              series = chartRef.current.addLineSeries({
+                color: '#9c27b0',
+                lineWidth: 2,
+                title: 'VWAP'
+              });
+              series.setData(indicatorData);
+              indicatorSeriesRef.current[indicator] = series;
+              console.log('VWAP indicator added');
+            }
+            break;
+
+          default:
+            break;
+        }
+      } catch (error) {
+        console.error(`Error adding ${indicator} indicator:`, error);
+      }
+    });
+  }, [indicators, chartData, loading]);
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    if (!symbol) return;
 
     try {
-      // Clear existing indicator series
-      Object.values(indicatorSeries.current).forEach(series => {
-        if (series && chart.current) {
-          chart.current.removeSeries(series);
+      const socket = io('http://localhost:3001');
+      socketRef.current = socket;
+      
+      socket.on('connect', () => {
+        console.log('Connected to WebSocket server');
+        socket.emit('subscribe', [symbol]);
+      });
+
+      socket.on('priceUpdate', (data) => {
+        if (data.symbol === symbol && candlestickSeriesRef.current) {
+          const timestamp = Math.floor(new Date(data.data.timestamp).getTime() / 1000);
+          const updatedData = {
+            time: timestamp,
+            open: data.data.open,
+            high: data.data.high,
+            low: data.data.low,
+            close: data.data.close
+          };
+          
+          candlestickSeriesRef.current.update(updatedData);
+          
+          if (volumeSeriesRef.current) {
+            volumeSeriesRef.current.update({
+              time: timestamp,
+              value: data.data.volume,
+              color: data.data.close >= data.data.open ? '#4caf5080' : '#f4433680'
+            });
+          }
         }
       });
-      indicatorSeries.current = {};
 
-      // Add new indicators
-      indicators.forEach(indicator => {
-        let indicatorData = [];
-        let series;
-
-        try {
-          switch (indicator) {
-            case 'SMA':
-              indicatorData = sma(chartData, 20).map((value, index) => ({
-                time: chartData[index].time,
-                value: value
-              })).filter(item => item.value !== null);
-              
-              if (indicatorData.length > 0) {
-                series = chart.current.addLineSeries({
-                  color: '#ff9800',
-                  lineWidth: 2,
-                  title: 'SMA(20)'
-                });
-              }
-              break;
-
-            case 'EMA':
-              indicatorData = ema(chartData, 20).map((value, index) => ({
-                time: chartData[index].time,
-                value: value
-              })).filter(item => item.value !== null);
-              
-              if (indicatorData.length > 0) {
-                series = chart.current.addLineSeries({
-                  color: '#2196f3',
-                  lineWidth: 2,
-                  title: 'EMA(20)'
-                });
-              }
-              break;
-
-            case 'VWAP':
-              indicatorData = vwap(chartData).map((value, index) => ({
-                time: chartData[index].time,
-                value: value
-              })).filter(item => item.value !== null);
-              
-              if (indicatorData.length > 0) {
-                series = chart.current.addLineSeries({
-                  color: '#9c27b0',
-                  lineWidth: 2,
-                  title: 'VWAP'
-                });
-              }
-              break;
-
-            default:
-              break;
-          }
-
-          if (series && indicatorData.length) {
-            series.setData(indicatorData);
-            indicatorSeries.current[indicator] = series;
-          }
-        } catch (error) {
-          console.error(`Error adding ${indicator} indicator:`, error);
-        }
+      socket.on('connect_error', (error) => {
+        console.error('WebSocket connection error:', error);
       });
+
+      return () => {
+        if (socketRef.current) {
+          socketRef.current.disconnect();
+          socketRef.current = null;
+        }
+      };
     } catch (error) {
-      console.error('Error updating indicators:', error);
+      console.error('Error setting up WebSocket:', error);
     }
-  }, [indicators, chartData, loading, chartInitialized]);
+  }, [symbol]);
 
   if (loading) {
     return (
       <div className="loading">
         Loading {symbol} chart data...
-      </div>
-    );
-  }
-
-  if (!chartInitialized) {
-    return (
-      <div className="loading">
-        Initializing chart...
       </div>
     );
   }
