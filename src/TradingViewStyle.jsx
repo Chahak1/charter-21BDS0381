@@ -2,9 +2,112 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Chart from "chart.js/auto";
 
-// Import indicators with explicit path
-const indicatorsModule = require('./indicators.js');
-const { sma, ema, rsi, macd, vwap, bollingerBands } = indicatorsModule;
+// Indicator functions defined directly in the component
+function sma(data, window) {
+  const closes = data.map(row => parseFloat(row.close));
+  return closes.map((_, idx, arr) =>
+    idx < window - 1
+      ? null
+      : arr.slice(idx - window + 1, idx + 1).reduce((a, b) => a + b, 0) / window
+  );
+}
+
+function ema(data, window) {
+  const k = 2 / (window + 1);
+  const closes = data.map(row => parseFloat(row.close));
+  const result = [];
+
+  closes.forEach((price, idx) => {
+    if (idx === 0) {
+      result.push(price);
+    } else {
+      const prev = result[result.length - 1];
+      result.push(price * k + prev * (1 - k));
+    }
+  });
+
+  return result.map((val, idx) => (idx < window - 1 ? null : val));
+}
+
+function rsi(data, period = 14) {
+  const closes = data.map(row => parseFloat(row.close));
+  const gains = [], losses = [];
+
+  for (let i = 1; i < closes.length; i++) {
+    const diff = closes[i] - closes[i - 1];
+    if (diff >= 0) {
+      gains.push(diff);
+      losses.push(0);
+    } else {
+      gains.push(0);
+      losses.push(-diff);
+    }
+  }
+
+  let avgGain = gains.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  let avgLoss = losses.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  const rsis = [null, ...Array(period - 1).fill(null)];
+
+  for (let i = period; i < gains.length; i++) {
+    avgGain = (avgGain * (period - 1) + gains[i]) / period;
+    avgLoss = (avgLoss * (period - 1) + losses[i]) / period;
+    const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+    rsis.push(100 - 100 / (1 + rs));
+  }
+
+  return rsis;
+}
+
+function macd(data, shortWindow = 12, longWindow = 26, signalWindow = 9) {
+  const shortEMA = ema(data, shortWindow);
+  const longEMA = ema(data, longWindow);
+  const macdLine = shortEMA.map((val, idx) =>
+    val !== null && longEMA[idx] !== null ? val - longEMA[idx] : null
+  );
+  const signalLine = ema(macdLine.map(v => ({ close: v ?? 0 })), signalWindow);
+  const histogram = macdLine.map((val, idx) =>
+    val !== null && signalLine[idx] !== null ? val - signalLine[idx] : null
+  );
+
+  return { macdLine, signalLine, histogram };
+}
+
+function vwap(data) {
+  let cumulativeTPV = 0;
+  let cumulativeVolume = 0;
+  return data.map((row, idx) => {
+    const typicalPrice = (parseFloat(row.high) + parseFloat(row.low) + parseFloat(row.close)) / 3;
+    const volume = parseFloat(row.volume);
+    cumulativeTPV += typicalPrice * volume;
+    cumulativeVolume += volume;
+    return cumulativeVolume === 0 ? null : cumulativeTPV / cumulativeVolume;
+  });
+}
+
+function bollingerBands(data, period = 20, stdDev = 2) {
+  const closes = data.map(row => parseFloat(row.close));
+  const smaValues = sma(data, period);
+  
+  const upperBand = [];
+  const lowerBand = [];
+  
+  for (let i = 0; i < closes.length; i++) {
+    if (i < period - 1) {
+      upperBand.push(null);
+      lowerBand.push(null);
+    } else {
+      const slice = closes.slice(i - period + 1, i + 1);
+      const mean = slice.reduce((a, b) => a + b, 0) / period;
+      const variance = slice.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / period;
+      const standardDeviation = Math.sqrt(variance);
+      
+      upperBand.push(mean + (stdDev * standardDeviation));
+      lowerBand.push(mean - (stdDev * standardDeviation));
+    }
+  }
+  
+  return { upperBand, middleBand: smaValues, lowerBand };
+}
 
 export default function TradingViewStyle({ symbol, indicators, range }) {
   const [chartData, setChartData] = useState([]);
