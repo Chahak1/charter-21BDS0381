@@ -1,14 +1,13 @@
 import React, { useState } from "react";
-import Sidebar from "../components/Sidebar";
-import ChartContainer from "../components/ChartContainer";
-import WatchlistPanel from "../components/WatchlistPanel";
-import StockStatsPanel from "../components/StockStatsPanel";
-import "../App.css";
+import ChartContainer from "./ChartContainer";
+import WatchlistPanel from "./WatchlistPanel";
+import StockStatsPanel from "./StockStatsPanel";
+import "./App.css";
+
 export default function App() {
   const [selectedStock, setSelectedStock] = useState("AAPL");
   return (
     <div className="app-root" style={{display:"flex",height:"100vh"}}>
-      <Sidebar />
       <main style={{ flex: 1, display: "flex" }}>
         <div style={{ flex: 3, flexDirection: "column" }}>
           <ChartContainer selectedStock={selectedStock} />

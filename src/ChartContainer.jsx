@@ -8,8 +8,8 @@ export default function ChartContainer({ selectedStock }) {
   const [range, setRange] = useState("1D"); // default range
 
   return (
-    <section style={{ height: "80vh", width: "100%" }}>
-      <ChartToolbar onRangeChange={setRange} />
+    <section style={{ height: "100vh", width: "100%" }}>
+      <ChartToolbar onRangeChange={setRange} currentRange={range} />
       <IndicatorSelector indicators={indicators} setIndicators={setIndicators} />
       <StockChart symbol={selectedStock} indicators={indicators} range={range} />
     </section>

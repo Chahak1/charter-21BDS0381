@@ -1,5 +1,5 @@
 import React from "react";
-const INDICATORS = ["SMA", "EMA", "RSI", "MACD", "VWAP"];
+const INDICATORS = ["SMA", "EMA", "RSI", "MACD", "VWAP", "BB"];
 export default function IndicatorSelector({ indicators, setIndicators }) {
   function toggle(ind) {
     setIndicators(prev =>

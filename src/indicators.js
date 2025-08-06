@@ -1,5 +1,5 @@
 // List of supported indicators
-export const INDICATORS = ["SMA", "EMA", "RSI", "MACD", "VWAP"];
+export const INDICATORS = ["SMA", "EMA", "RSI", "MACD", "VWAP", "BB"];
 
 /**
  * Simple Moving Average (SMA)
@@ -95,4 +95,32 @@ export function vwap(data) {
     cumulativeVolume += volume;
     return cumulativeVolume === 0 ? null : cumulativeTPV / cumulativeVolume;
   });
+}
+
+/**
+ * Bollinger Bands
+ */
+export function bollingerBands(data, period = 20, stdDev = 2) {
+  const closes = data.map(row => parseFloat(row.close));
+  const smaValues = sma(data, period);
+  
+  const upperBand = [];
+  const lowerBand = [];
+  
+  for (let i = 0; i < closes.length; i++) {
+    if (i < period - 1) {
+      upperBand.push(null);
+      lowerBand.push(null);
+    } else {
+      const slice = closes.slice(i - period + 1, i + 1);
+      const mean = slice.reduce((a, b) => a + b, 0) / period;
+      const variance = slice.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / period;
+      const standardDeviation = Math.sqrt(variance);
+      
+      upperBand.push(mean + (stdDev * standardDeviation));
+      lowerBand.push(mean - (stdDev * standardDeviation));
+    }
+  }
+  
+  return { upperBand, middleBand: smaValues, lowerBand };
 }
