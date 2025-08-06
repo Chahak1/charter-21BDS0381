@@ -129,42 +129,22 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
         console.log("Fetched data length:", data ? data.length : 0);
         console.log("First few records:", data ? data.slice(0, 3) : "No data");
 
-        // Use CSV data as-is
+        // Use CSV data as-is - no hardcoded fallbacks
         if (data && data.length > 0) {
-          // Sort data by timestamp to ensure proper order
-          data = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-          
           console.log("✅ Using CSV data:", data.length, "records");
           console.log("📊 Data source: CSV files for", symbol);
+          console.log("📅 Data range:", data[0]?.timestamp, "to", data[data.length - 1]?.timestamp);
           setChartData(data);
           setDataSource("CSV");
         } else {
-          console.log("⚠️ No CSV data found, using mock data");
-          // Create mock data for testing if no CSV data
-          const mockData = Array.from({ length: 100 }, (_, i) => ({
-            timestamp: new Date(Date.now() - (100 - i) * 24 * 60 * 60 * 1000).toISOString(),
-            open: 100 + Math.random() * 20,
-            high: 105 + Math.random() * 20,
-            low: 95 + Math.random() * 20,
-            close: 100 + Math.random() * 20,
-            volume: 1000000 + Math.random() * 500000
-          }));
-          setChartData(mockData);
-          setDataSource("Mock");
+          console.error("❌ No CSV data found for", symbol);
+          setChartData([]);
+          setDataSource("Error");
         }
       } catch (err) {
         console.error("Failed to load stock data:", err);
-        // Create mock data for testing
-        const mockData = Array.from({ length: 100 }, (_, i) => ({
-          timestamp: new Date(Date.now() - (100 - i) * 24 * 60 * 60 * 1000).toISOString(),
-          open: 100 + Math.random() * 20,
-          high: 105 + Math.random() * 20,
-          low: 95 + Math.random() * 20,
-          close: 100 + Math.random() * 20,
-          volume: 1000000 + Math.random() * 500000
-        }));
-        setChartData(mockData);
-        setDataSource("Mock");
+        setChartData([]);
+        setDataSource("Error");
       }
     };
 
@@ -539,15 +519,15 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
           gap: "8px",
           padding: "4px 8px",
           borderRadius: "4px",
-          backgroundColor: dataSource === "CSV" ? "#dcfce7" : "#fef3c7",
-          border: `1px solid ${dataSource === "CSV" ? "#22c55e" : "#f59e0b"}`
+          backgroundColor: dataSource === "CSV" ? "#dcfce7" : dataSource === "Error" ? "#fee2e2" : "#fef3c7",
+          border: `1px solid ${dataSource === "CSV" ? "#22c55e" : dataSource === "Error" ? "#ef4444" : "#f59e0b"}`
         }}>
           <span style={{ 
             fontSize: "12px", 
             fontWeight: "500",
-            color: dataSource === "CSV" ? "#166534" : "#92400e"
+            color: dataSource === "CSV" ? "#166534" : dataSource === "Error" ? "#dc2626" : "#92400e"
           }}>
-            {dataSource === "CSV" ? "📊 CSV Data" : "⚠️ Mock Data"}
+            {dataSource === "CSV" ? "📊 CSV Data" : dataSource === "Error" ? "❌ No Data" : "⚠️ Loading..."}
           </span>
         </div>
 

@@ -34,7 +34,7 @@ async function getStockData(symbol) {
     const data = await readCSVFile(filePath);
     
     // Transform data to match expected format
-    return data.map(row => ({
+    const transformedData = data.map(row => ({
       timestamp: row.timestamp,
       open: parseFloat(row.open),
       high: parseFloat(row.high),
@@ -42,6 +42,14 @@ async function getStockData(symbol) {
       close: parseFloat(row.close),
       volume: parseInt(row.volume)
     }));
+    
+    // Sort data by timestamp to ensure proper order
+    transformedData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    
+    console.log(`✅ Loaded ${transformedData.length} records for ${symbol}`);
+    console.log(`📊 Data range: ${transformedData[0]?.timestamp} to ${transformedData[transformedData.length - 1]?.timestamp}`);
+    
+    return transformedData;
   } catch (error) {
     console.error(`Error reading CSV for ${symbol}:`, error);
     throw error;
