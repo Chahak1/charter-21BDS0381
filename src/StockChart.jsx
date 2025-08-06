@@ -112,6 +112,7 @@ function bollingerBands(data, period = 20, stdDev = 2) {
 export default function StockChart({ symbol, indicators, range, isFullScreen, onFullScreenToggle }) {
   const [chartData, setChartData] = useState([]);
   const [chartType, setChartType] = useState("candlestick");
+  const [dataType, setDataType] = useState("historical"); // historical or simulated
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
@@ -126,7 +127,7 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
 
     const fetchData = async () => {
       try {
-        const res = await axios.get(`http://localhost:3001/api/stocks/combined/${symbol}`);
+        const res = await axios.get(`http://localhost:3001/api/stocks/combined/${symbol}?type=${dataType}`);
         let data = res.data;
 
         console.log("Fetched data:", data);
@@ -177,7 +178,7 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
     };
 
     fetchData();
-  }, [symbol, range]);
+  }, [symbol, range, dataType]);
 
   useEffect(() => {
     if (!chartData.length || !chartRef.current) return;
@@ -538,6 +539,41 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
         background: "#f8fafc",
         gap: "10px"
       }}>
+        {/* Data Type Selector */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontWeight: "500", color: "#374151" }}>Data:</span>
+          <div style={{ display: "flex", background: "white", borderRadius: "6px", border: "1px solid #d1d5db" }}>
+            <button
+              onClick={() => setDataType("historical")}
+              style={{
+                padding: "6px 12px",
+                border: "none",
+                background: dataType === "historical" ? "#2563eb" : "transparent",
+                color: dataType === "historical" ? "white" : "#374151",
+                cursor: "pointer",
+                fontSize: "12px",
+                borderRadius: dataType === "historical" ? "6px" : "0"
+              }}
+            >
+              Historical
+            </button>
+            <button
+              onClick={() => setDataType("simulated")}
+              style={{
+                padding: "6px 12px",
+                border: "none",
+                background: dataType === "simulated" ? "#2563eb" : "transparent",
+                color: dataType === "simulated" ? "white" : "#374151",
+                cursor: "pointer",
+                fontSize: "12px",
+                borderRadius: dataType === "simulated" ? "6px" : "0"
+              }}
+            >
+              Simulated
+            </button>
+          </div>
+        </div>
+
         <button
           onClick={() => setChartType("candlestick")}
           style={{
