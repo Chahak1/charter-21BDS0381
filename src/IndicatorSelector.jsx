@@ -7,14 +7,14 @@ export default function IndicatorSelector({ indicators, setIndicators }) {
     );
   }
   return (
-    <div style={{margin:"10px 0"}}>
-      <b>Indicators:</b>
+    <div style={{display:"flex", alignItems:"center", gap:"8px"}}>
       {INDICATORS.map((ind) =>
-        <label key={ind} style={{marginLeft:10}}>
+        <label key={ind} style={{display:"flex", alignItems:"center", gap:"4px", fontSize:"12px"}}>
           <input
             type="checkbox"
             checked={indicators.includes(ind)}
             onChange={()=>toggle(ind)}
+            style={{margin:0}}
           />
           {ind}
         </label>

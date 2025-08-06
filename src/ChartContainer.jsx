@@ -1,18 +1,9 @@
-import React, { useState } from "react";
-import ChartToolbar from "./ChartToolbar";
+import React from "react";
 import StockChart from "./StockChart";
-import IndicatorSelector from "./IndicatorSelector";
 
-export default function ChartContainer({ selectedStock, isFullScreen, onFullScreenToggle }) {
-  const [indicators, setIndicators] = useState([]);
-  const [range, setRange] = useState("1D"); // default range
-
-
-
+export default function ChartContainer({ selectedStock, isFullScreen, onFullScreenToggle, indicators, range }) {
   return (
     <section style={{ height: "100vh", width: "100%", display: "flex", flexDirection: "column" }}>
-      <ChartToolbar onRangeChange={setRange} currentRange={range} />
-      <IndicatorSelector indicators={indicators} setIndicators={setIndicators} />
       <div style={{ flex: 1, overflow: "hidden" }}>
         <StockChart 
           symbol={selectedStock} 
