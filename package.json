@@ -1,17 +1,43 @@
 {
-  "name": "signatureverifierproject",
+  "name": "stock-chart-app",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "server": "node server/server.js",
+    "dev": "concurrently \"npm run server\" \"npm start\"",
+    "test": "react-scripts test"
   },
-  "keywords": [],
+  "keywords": ["stocks", "charts", "react", "financial"],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "chai": "^5.1.2",
-    "hardhat": "^2.22.15"
+  "description": "Live stock chart visualization with financial indicators",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "axios": "^1.6.0",
+    "recharts": "^2.8.0",
+    "lightweight-charts": "^4.1.3",
+    "socket.io-client": "^4.7.4",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "ws": "^8.14.2",
+    "concurrently": "^8.2.2"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
