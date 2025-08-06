@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Chart from "chart.js/auto";
-import { sma, ema, rsi, macd, vwap, bollingerBands } from "./indicators";
+import { sma, ema, rsi, macd, vwap, bollingerBands } from "./indicators.js";
 
 export default function TradingViewStyle({ symbol, indicators, range }) {
   const [chartData, setChartData] = useState([]);
