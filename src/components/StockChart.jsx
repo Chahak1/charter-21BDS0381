@@ -37,7 +37,19 @@ export default function StockChart({ symbol, indicators, range }) {
 
   // Initialize chart only once
   useEffect(() => {
-    if (!chartContainerRef.current || chartRef.current) return;
+    console.log('Chart init useEffect called');
+    console.log('chartContainerRef.current:', !!chartContainerRef.current);
+    console.log('chartRef.current:', !!chartRef.current);
+    
+    if (!chartContainerRef.current) {
+      console.log('No chart container ref, returning');
+      return;
+    }
+    
+    if (chartRef.current) {
+      console.log('Chart already exists, returning');
+      return;
+    }
 
     console.log('Creating chart...');
     
@@ -96,6 +108,18 @@ export default function StockChart({ symbol, indicators, range }) {
 
       console.log('Chart initialized successfully');
 
+      // Add test data immediately to verify chart is working
+      const testData = [
+        { time: Math.floor(Date.now() / 1000) - 86400 * 5, open: 100, high: 105, low: 95, close: 102 },
+        { time: Math.floor(Date.now() / 1000) - 86400 * 4, open: 102, high: 108, low: 98, close: 106 },
+        { time: Math.floor(Date.now() / 1000) - 86400 * 3, open: 106, high: 110, low: 102, close: 104 },
+        { time: Math.floor(Date.now() / 1000) - 86400 * 2, open: 104, high: 107, low: 100, close: 105 },
+        { time: Math.floor(Date.now() / 1000) - 86400 * 1, open: 105, high: 112, low: 103, close: 108 },
+      ];
+      
+      candlestickSeries.setData(testData);
+      console.log('Test data set to verify chart is working');
+
       // Handle resize
       const handleResize = () => {
         if (chartRef.current && chartContainerRef.current) {
@@ -125,7 +149,20 @@ export default function StockChart({ symbol, indicators, range }) {
 
   // Load data when symbol or range changes
   useEffect(() => {
-    if (!symbol || !chartRef.current) return;
+    console.log('Data loading useEffect called');
+    console.log('symbol:', symbol);
+    console.log('chartRef.current:', !!chartRef.current);
+    console.log('range:', range);
+    
+    if (!symbol) {
+      console.log('No symbol, returning');
+      return;
+    }
+    
+    if (!chartRef.current) {
+      console.log('No chart ref, returning');
+      return;
+    }
 
     const fetchData = async () => {
       setLoading(true);

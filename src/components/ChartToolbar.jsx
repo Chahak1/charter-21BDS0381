@@ -7,7 +7,13 @@ export default function ChartToolbar({ onRangeChange, currentRange }) {
 
   const handleRangeChange = (range) => {
     console.log('Range change requested:', range);
-    onRangeChange(range);
+    console.log('onRangeChange function:', typeof onRangeChange);
+    if (onRangeChange) {
+      onRangeChange(range);
+      console.log('Range change called successfully');
+    } else {
+      console.error('onRangeChange is not a function!');
+    }
   };
 
   return (

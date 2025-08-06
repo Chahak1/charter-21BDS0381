@@ -8,6 +8,16 @@ export default function ChartContainer({ selectedStock }) {
   const [range, setRange] = useState('1D');
 
   console.log('ChartContainer render:', { selectedStock, indicators, range });
+  console.log('ChartContainer indicators length:', indicators.length);
+  console.log('ChartContainer indicators content:', indicators);
+
+  // Initialize indicators if they're empty
+  useEffect(() => {
+    if (indicators.length === 0) {
+      console.log('Indicators empty, reinitializing...');
+      setIndicators(['SMA']);
+    }
+  }, [indicators]);
 
   // Reset indicators when stock changes to ensure they re-render
   useEffect(() => {
