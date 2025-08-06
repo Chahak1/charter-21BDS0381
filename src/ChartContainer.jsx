@@ -3,9 +3,11 @@ import ChartToolbar from "./ChartToolbar";
 import StockChart from "./StockChart";
 import IndicatorSelector from "./IndicatorSelector";
 
-export default function ChartContainer({ selectedStock, isFullScreen, setIsFullScreen }) {
+export default function ChartContainer({ selectedStock, isFullScreen, onFullScreenToggle }) {
   const [indicators, setIndicators] = useState([]);
   const [range, setRange] = useState("1D"); // default range
+
+
 
   return (
     <section style={{ height: "100vh", width: "100%", display: "flex", flexDirection: "column" }}>
@@ -17,7 +19,7 @@ export default function ChartContainer({ selectedStock, isFullScreen, setIsFullS
           indicators={indicators} 
           range={range}
           isFullScreen={isFullScreen}
-          setIsFullScreen={setIsFullScreen}
+          onFullScreenToggle={onFullScreenToggle}
         />
       </div>
     </section>

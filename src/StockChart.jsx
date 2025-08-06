@@ -3,11 +3,13 @@ import axios from "axios";
 import Chart from "chart.js/auto";
 import { sma, ema, rsi, macd, vwap, bollingerBands } from "./indicators";
 
-export default function StockChart({ symbol, indicators, range, isFullScreen, setIsFullScreen }) {
+export default function StockChart({ symbol, indicators, range, isFullScreen, onFullScreenToggle }) {
   const [chartData, setChartData] = useState([]);
   const [chartType, setChartType] = useState("candlestick");
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+
+
 
 
 
@@ -394,7 +396,7 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, se
           Volume
         </button>
         <button
-          onClick={() => setIsFullScreen(!isFullScreen)}
+          onClick={onFullScreenToggle}
           style={{
             padding: "8px 16px",
             border: "1px solid #d1d5db",

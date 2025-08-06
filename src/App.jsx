@@ -8,7 +8,9 @@ export default function App() {
   const [selectedStock, setSelectedStock] = useState("AAPL");
   const [isFullScreen, setIsFullScreen] = useState(false);
 
-
+  const handleFullScreenToggle = () => {
+    setIsFullScreen(!isFullScreen);
+  };
 
   return (
     <div className="app-root" style={{display:"flex",height:"100vh"}}>
@@ -21,7 +23,7 @@ export default function App() {
           <ChartContainer 
             selectedStock={selectedStock} 
             isFullScreen={isFullScreen}
-            setIsFullScreen={setIsFullScreen}
+            onFullScreenToggle={handleFullScreenToggle}
           />
         </div>
         {!isFullScreen && (
