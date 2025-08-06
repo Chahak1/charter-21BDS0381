@@ -397,20 +397,7 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
         >
           Volume
         </button>
-        <button
-          onClick={onFullScreenToggle}
-          style={{
-            padding: "8px 16px",
-            border: "1px solid #d1d5db",
-            borderRadius: "6px",
-            background: isFullScreen ? "#dc2626" : "white",
-            color: isFullScreen ? "white" : "#374151",
-            cursor: "pointer",
-            marginLeft: "auto"
-          }}
-        >
-          {isFullScreen ? "Exit Full Screen" : "Full Screen"}
-        </button>
+
       </div>
 
       {/* Main Chart */}
