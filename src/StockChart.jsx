@@ -1,7 +1,113 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Chart from "chart.js/auto";
-import { sma, ema, rsi, macd, vwap, bollingerBands } from "./indicators";
+
+// Indicator functions defined directly in the component
+function sma(data, window) {
+  const closes = data.map(row => parseFloat(row.close));
+  return closes.map((_, idx, arr) =>
+    idx < window - 1
+      ? null
+      : arr.slice(idx - window + 1, idx + 1).reduce((a, b) => a + b, 0) / window
+  );
+}
+
+function ema(data, window) {
+  const k = 2 / (window + 1);
+  const closes = data.map(row => parseFloat(row.close));
+  const result = [];
+
+  closes.forEach((price, idx) => {
+    if (idx === 0) {
+      result.push(price);
+    } else {
+      const prev = result[result.length - 1];
+      result.push(price * k + prev * (1 - k));
+    }
+  });
+
+  return result.map((val, idx) => (idx < window - 1 ? null : val));
+}
+
+function rsi(data, period = 14) {
+  const closes = data.map(row => parseFloat(row.close));
+  const gains = [], losses = [];
+
+  for (let i = 1; i < closes.length; i++) {
+    const diff = closes[i] - closes[i - 1];
+    if (diff >= 0) {
+      gains.push(diff);
+      losses.push(0);
+    } else {
+      gains.push(0);
+      losses.push(-diff);
+    }
+  }
+
+  let avgGain = gains.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  let avgLoss = losses.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  const rsis = [null, ...Array(period - 1).fill(null)];
+
+  for (let i = period; i < gains.length; i++) {
+    avgGain = (avgGain * (period - 1) + gains[i]) / period;
+    avgLoss = (avgLoss * (period - 1) + losses[i]) / period;
+    const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+    rsis.push(100 - 100 / (1 + rs));
+  }
+
+  return rsis;
+}
+
+function macd(data, shortWindow = 12, longWindow = 26, signalWindow = 9) {
+  const shortEMA = ema(data, shortWindow);
+  const longEMA = ema(data, longWindow);
+  const macdLine = shortEMA.map((val, idx) =>
+    val !== null && longEMA[idx] !== null ? val - longEMA[idx] : null
+  );
+  const signalLine = ema(macdLine.map(v => ({ close: v ?? 0 })), signalWindow);
+  const histogram = macdLine.map((val, idx) =>
+    val !== null && signalLine[idx] !== null ? val - signalLine[idx] : null
+  );
+
+  return { macdLine, signalLine, histogram };
+}
+
+function vwap(data) {
+  let cumulativeTPV = 0;
+  let cumulativeVolume = 0;
+  return data.map((row, idx) => {
+    const typicalPrice = (parseFloat(row.high) + parseFloat(row.low) + parseFloat(row.close)) / 3;
+    const volume = parseFloat(row.volume);
+    cumulativeTPV += typicalPrice * volume;
+    cumulativeVolume += volume;
+    return cumulativeVolume === 0 ? null : cumulativeTPV / cumulativeVolume;
+  });
+}
+
+function bollingerBands(data, period = 20, stdDev = 2) {
+  const closes = data.map(row => parseFloat(row.close));
+  const smaValues = sma(data, period);
+  
+  const upperBand = [];
+  const lowerBand = [];
+  
+  for (let i = 0; i < closes.length; i++) {
+    if (i < period - 1) {
+      upperBand.push(null);
+      lowerBand.push(null);
+    } else {
+      const slice = closes.slice(i - period + 1, i + 1);
+      const mean = slice.reduce((a, b) => a + b, 0) / period;
+      const variance = slice.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / period;
+      const standardDeviation = Math.sqrt(variance);
+      
+      upperBand.push(mean + (stdDev * standardDeviation));
+      lowerBand.push(mean - (stdDev * standardDeviation));
+    }
+  }
+  
+  return { upperBand, middleBand: smaValues, lowerBand };
+}
 
 export default function StockChart({ symbol, indicators, range, isFullScreen, onFullScreenToggle }) {
   const [chartData, setChartData] = useState([]);
@@ -84,16 +190,69 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
     const labels = chartData.map(item => new Date(item.timestamp).toLocaleDateString());
     const prices = chartData.map(item => parseFloat(item.close));
 
-    const datasets = [
-      {
+    const datasets = [];
+
+    // Add main price data based on chart type
+    if (chartType === "candlestick") {
+      // For candlesticks, we'll use bars with custom colors
+      const candlestickData = chartData.map(item => {
+        const open = parseFloat(item.open);
+        const close = parseFloat(item.close);
+        return {
+          x: new Date(item.timestamp).toLocaleDateString(),
+          y: close,
+          open: open,
+          close: close,
+          high: parseFloat(item.high),
+          low: parseFloat(item.low),
+          color: close >= open ? "#10B981" : "#EF4444" // Green for up, red for down
+        };
+      });
+
+      datasets.push({
+        label: "Price",
+        data: candlestickData,
+        backgroundColor: candlestickData.map(d => d.color),
+        borderColor: candlestickData.map(d => d.color),
+        type: "bar",
+        borderWidth: 1,
+        borderRadius: 2
+      });
+    } else if (chartType === "line") {
+      datasets.push({
         label: "Price",
         data: prices,
-        borderColor: "#2563eb",
-        backgroundColor: "rgba(37, 99, 235, 0.1)",
+        borderColor: "#2962FF",
+        backgroundColor: "transparent",
         tension: 0.1,
-        type: chartType === "candlestick" ? "bar" : "line"
-      }
-    ];
+        type: "line",
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4
+      });
+    } else if (chartType === "area") {
+      datasets.push({
+        label: "Price",
+        data: prices,
+        borderColor: "#2962FF",
+        backgroundColor: "rgba(41, 98, 255, 0.2)",
+        tension: 0.1,
+        type: "line",
+        borderWidth: 2,
+        fill: true
+      });
+    } else if (chartType === "volume") {
+      const volumeData = chartData.map(item => parseFloat(item.volume));
+      datasets.push({
+        label: "Volume",
+        data: volumeData,
+        backgroundColor: "rgba(245, 158, 11, 0.6)",
+        borderColor: "#F59E0B",
+        type: "bar",
+        borderWidth: 1,
+        borderRadius: 2
+      });
+    }
 
     // Add indicators
     if (indicators.includes("SMA")) {
@@ -178,17 +337,51 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, on
         plugins: {
           legend: {
             position: "top",
+            labels: {
+              color: "#374151",
+              font: {
+                size: 12
+              }
+            }
           },
           title: {
-            display: true,
-            text: `${symbol} Stock Chart`,
+            display: false
           },
+          tooltip: {
+            mode: "index",
+            intersect: false,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            titleColor: "#F8FAFC",
+            bodyColor: "#D1D5DB",
+            borderColor: "#374151",
+            borderWidth: 1
+          }
         },
         scales: {
+          x: {
+            grid: {
+              color: "#E5E7EB",
+              borderColor: "#E5E7EB"
+            },
+            ticks: {
+              color: "#6B7280",
+              maxRotation: 0
+            }
+          },
           y: {
             type: "linear",
             display: true,
-            position: "left",
+            position: "right",
+            grid: {
+              color: "#E5E7EB",
+              borderColor: "#E5E7EB"
+            },
+            ticks: {
+              color: "#6B7280",
+              callback: function(value) {
+                return "$" + value.toFixed(2);
+              }
+            }
           },
         },
       },

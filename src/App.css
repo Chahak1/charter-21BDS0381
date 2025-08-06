@@ -6,8 +6,6 @@
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
-  background-color: #1E293B;
-  color: #F8FAFC;
 }
 
 * {
@@ -28,41 +26,17 @@ button:active {
   transform: translateY(0);
 }
 
-/* TradingView Style Enhancements */
-.tradingview-button {
-  transition: all 0.15s ease;
+/* Full screen transitions */
+.app-root {
+  transition: all 0.3s ease;
 }
 
-.tradingview-button:hover {
-  background-color: #374151 !important;
+/* Ensure smooth transitions for full screen mode */
+main {
+  transition: all 0.3s ease;
 }
 
-.tradingview-button:active {
-  background-color: #4B5563 !important;
-}
-
-/* Chart container styles */
-.chart-container {
-  background-color: #1E293B;
-  border: 1px solid #374151;
-}
-
-/* Custom scrollbar for dark theme */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1E293B;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #4B5563;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #6B7280;
+aside {
+  transition: all 0.3s ease;
 }
 
