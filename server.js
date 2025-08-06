@@ -22,9 +22,9 @@ async function readCSVFile(filePath) {
 }
 
 // Function to get stock data from CSV files
-async function getStockData(symbol, dataType = 'historical') {
+async function getStockData(symbol) {
   try {
-    const filePath = path.join(__dirname, 'data', dataType, `${symbol}.csv`);
+    const filePath = path.join(__dirname, 'data', 'stocks', `${symbol}.csv`);
     
     // Check if file exists
     if (!await fs.pathExists(filePath)) {
@@ -40,10 +40,7 @@ async function getStockData(symbol, dataType = 'historical') {
       high: parseFloat(row.high),
       low: parseFloat(row.low),
       close: parseFloat(row.close),
-      volume: parseInt(row.volume),
-      adjusted_close: row.adjusted_close ? parseFloat(row.adjusted_close) : null,
-      dividend_amount: row.dividend_amount ? parseFloat(row.dividend_amount) : null,
-      split_coefficient: row.split_coefficient ? parseFloat(row.split_coefficient) : null
+      volume: parseInt(row.volume)
     }));
   } catch (error) {
     console.error(`Error reading CSV for ${symbol}:`, error);
@@ -51,62 +48,38 @@ async function getStockData(symbol, dataType = 'historical') {
   }
 }
 
-// API endpoint for historical stock data
-app.get('/api/stocks/historical/:symbol', async (req, res) => {
-  try {
-    const { symbol } = req.params;
-    const data = await getStockData(symbol, 'historical');
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// API endpoint for simulated stock data
-app.get('/api/stocks/simulated/:symbol', async (req, res) => {
-  try {
-    const { symbol } = req.params;
-    const data = await getStockData(symbol, 'simulated');
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// API endpoint for combined stock data (defaults to historical)
-app.get('/api/stocks/combined/:symbol', async (req, res) => {
-  try {
-    const { symbol } = req.params;
-    const { type = 'historical' } = req.query;
-    const data = await getStockData(symbol, type);
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // API endpoint to get available symbols
 app.get('/api/stocks/symbols', async (req, res) => {
   try {
-    const historicalDir = path.join(__dirname, 'data', 'historical');
-    const simulatedDir = path.join(__dirname, 'data', 'simulated');
+    const stocksDir = path.join(__dirname, 'data', 'stocks');
     
-    const historicalFiles = await fs.readdir(historicalDir);
-    const simulatedFiles = await fs.readdir(simulatedDir);
+    // Check if directory exists
+    if (!await fs.pathExists(stocksDir)) {
+      return res.status(404).json({ error: 'Stocks directory not found' });
+    }
     
-    const historicalSymbols = historicalFiles
-      .filter(file => file.endsWith('.csv'))
-      .map(file => file.replace('.csv', ''));
+    const files = await fs.readdir(stocksDir);
     
-    const simulatedSymbols = simulatedFiles
+    const symbols = files
       .filter(file => file.endsWith('.csv'))
       .map(file => file.replace('.csv', ''));
     
     res.json({
-      historical: historicalSymbols,
-      simulated: simulatedSymbols,
-      all: [...new Set([...historicalSymbols, ...simulatedSymbols])]
+      symbols: symbols,
+      all: symbols
     });
+  } catch (error) {
+    console.error('Error reading symbols:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// API endpoint for stock data
+app.get('/api/stocks/:symbol', async (req, res) => {
+  try {
+    const { symbol } = req.params;
+    const data = await getStockData(symbol);
+    res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

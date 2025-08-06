@@ -99,50 +99,41 @@ function bollingerBands(data, period = 20, stdDev = 2) {
       const slice = closes.slice(i - period + 1, i + 1);
       const mean = slice.reduce((a, b) => a + b, 0) / period;
       const variance = slice.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / period;
-      const standardDeviation = Math.sqrt(variance);
+      const std = Math.sqrt(variance);
       
-      upperBand.push(mean + (stdDev * standardDeviation));
-      lowerBand.push(mean - (stdDev * standardDeviation));
+      upperBand.push(mean + stdDev * std);
+      lowerBand.push(mean - stdDev * std);
     }
   }
   
   return { upperBand, middleBand: smaValues, lowerBand };
 }
 
-export default function StockChart({ symbol, indicators, range, dataType, setDataType, isFullScreen, onFullScreenToggle }) {
+export default function StockChart({ symbol, indicators, range, isFullScreen, onFullScreenToggle }) {
   const [chartData, setChartData] = useState([]);
   const [chartType, setChartType] = useState("candlestick");
   const [dataSource, setDataSource] = useState(""); // Track data source
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
-
-
-
-
-
-
   useEffect(() => {
-    console.log("Fetching stock data for", symbol, "with range", range, "dataType:", dataType);
+    console.log("Fetching stock data for", symbol, "with range", range);
 
     const fetchData = async () => {
       try {
-        console.log("Making API call to:", `http://localhost:3001/api/stocks/combined/${symbol}?type=${dataType}`);
-        const res = await axios.get(`http://localhost:3001/api/stocks/combined/${symbol}?type=${dataType}`);
+        console.log("Making API call to:", `http://localhost:3001/api/stocks/${symbol}`);
+        const res = await axios.get(`http://localhost:3001/api/stocks/${symbol}`);
         let data = res.data;
 
         console.log("API Response status:", res.status);
         console.log("Fetched data length:", data ? data.length : 0);
         console.log("First few records:", data ? data.slice(0, 3) : "No data");
 
-        // For CSV data, we'll use the data as-is since it's already filtered by date range
-        // The CSV files contain data from specific time periods
+        // Use CSV data as-is
         if (data && data.length > 0) {
           // Sort data by timestamp to ensure proper order
           data = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
           
-          // For demonstration, we'll show all available data
-          // In a real app, you might want to implement proper date filtering based on the actual data dates
           console.log("✅ Using CSV data:", data.length, "records");
           console.log("📊 Data source: CSV files for", symbol);
           setChartData(data);
@@ -178,7 +169,7 @@ export default function StockChart({ symbol, indicators, range, dataType, setDat
     };
 
     fetchData();
-  }, [symbol, range, dataType]);
+  }, [symbol, range]);
 
   useEffect(() => {
     if (!chartData.length || !chartRef.current) return;
@@ -223,35 +214,31 @@ export default function StockChart({ symbol, indicators, range, dataType, setDat
       datasets.push({
         label: "Price",
         data: prices,
-        borderColor: "#2962FF",
+        borderColor: "#2563eb",
         backgroundColor: "transparent",
-        tension: 0.1,
-        type: "line",
         borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 4
+        fill: false,
+        tension: 0.1
       });
     } else if (chartType === "area") {
       datasets.push({
         label: "Price",
         data: prices,
-        borderColor: "#2962FF",
-        backgroundColor: "rgba(41, 98, 255, 0.2)",
-        tension: 0.1,
-        type: "line",
+        borderColor: "#2563eb",
+        backgroundColor: "rgba(37, 99, 235, 0.1)",
         borderWidth: 2,
-        fill: true
+        fill: true,
+        tension: 0.1
       });
     } else if (chartType === "volume") {
-      const volumeData = chartData.map(item => parseFloat(item.volume));
+      const volumes = chartData.map(item => parseFloat(item.volume));
       datasets.push({
         label: "Volume",
-        data: volumeData,
-        backgroundColor: "rgba(245, 158, 11, 0.6)",
-        borderColor: "#F59E0B",
-        type: "bar",
+        data: volumes,
+        backgroundColor: "rgba(251, 146, 60, 0.8)",
+        borderColor: "#fb923c",
         borderWidth: 1,
-        borderRadius: 2
+        type: "bar"
       });
     }
 
@@ -261,10 +248,11 @@ export default function StockChart({ symbol, indicators, range, dataType, setDat
       datasets.push({
         label: "SMA (20)",
         data: smaValues,
-        borderColor: "#dc2626",
+        borderColor: "#8b5cf6",
         backgroundColor: "transparent",
-        tension: 0.1,
-        type: "line"
+        borderWidth: 2,
+        fill: false,
+        tension: 0.1
       });
     }
 
@@ -273,10 +261,11 @@ export default function StockChart({ symbol, indicators, range, dataType, setDat
       datasets.push({
         label: "EMA (20)",
         data: emaValues,
-        borderColor: "#ea580c",
+        borderColor: "#06b6d4",
         backgroundColor: "transparent",
-        tension: 0.1,
-        type: "line"
+        borderWidth: 2,
+        fill: false,
+        tension: 0.1
       });
     }
 
@@ -285,39 +274,43 @@ export default function StockChart({ symbol, indicators, range, dataType, setDat
       datasets.push({
         label: "VWAP",
         data: vwapValues,
-        borderColor: "#059669",
+        borderColor: "#f59e0b",
         backgroundColor: "transparent",
-        tension: 0.1,
-        type: "line"
+        borderWidth: 2,
+        fill: false,
+        tension: 0.1
       });
     }
 
     if (indicators.includes("BB")) {
-      const bbValues = bollingerBands(chartData, 20, 2);
+      const bb = bollingerBands(chartData);
       datasets.push(
         {
           label: "BB Upper",
-          data: bbValues.upperBand,
-          borderColor: "#7c3aed",
+          data: bb.upperBand,
+          borderColor: "#10b981",
           backgroundColor: "transparent",
-          tension: 0.1,
-          type: "line"
+          borderWidth: 1,
+          fill: false,
+          tension: 0.1
         },
         {
           label: "BB Middle",
-          data: bbValues.middleBand,
+          data: bb.middleBand,
           borderColor: "#6b7280",
           backgroundColor: "transparent",
-          tension: 0.1,
-          type: "line"
+          borderWidth: 1,
+          fill: false,
+          tension: 0.1
         },
         {
           label: "BB Lower",
-          data: bbValues.lowerBand,
-          borderColor: "#7c3aed",
+          data: bb.lowerBand,
+          borderColor: "#10b981",
           backgroundColor: "transparent",
-          tension: 0.1,
-          type: "line"
+          borderWidth: 1,
+          fill: false,
+          tension: 0.1
         }
       );
     }
@@ -325,67 +318,66 @@ export default function StockChart({ symbol, indicators, range, dataType, setDat
     chartInstance.current = new Chart(ctx, {
       type: chartType === "candlestick" ? "bar" : "line",
       data: {
-        labels,
-        datasets
+        labels: labels,
+        datasets: datasets
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         interaction: {
-          mode: "index",
           intersect: false,
-        },
-        plugins: {
-          legend: {
-            position: "top",
-            labels: {
-              color: "#374151",
-              font: {
-                size: 12
-              }
-            }
-          },
-          title: {
-            display: false
-          },
-          tooltip: {
-            mode: "index",
-            intersect: false,
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
-            titleColor: "#F8FAFC",
-            bodyColor: "#D1D5DB",
-            borderColor: "#374151",
-            borderWidth: 1
-          }
+          mode: 'index'
         },
         scales: {
           x: {
+            display: true,
             grid: {
-              color: "#E5E7EB",
-              borderColor: "#E5E7EB"
+              color: '#e5e7eb'
             },
             ticks: {
-              color: "#6B7280",
+              color: '#6b7280',
               maxRotation: 0
             }
           },
           y: {
-            type: "linear",
             display: true,
-            position: "right",
+            position: 'right',
             grid: {
-              color: "#E5E7EB",
-              borderColor: "#E5E7EB"
+              color: '#e5e7eb'
             },
             ticks: {
-              color: "#6B7280",
+              color: '#6b7280',
               callback: function(value) {
-                return "$" + value.toFixed(2);
+                return '$' + value.toFixed(2);
               }
             }
-          },
+          }
         },
-      },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              color: '#374151',
+              usePointStyle: true
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#6b7280',
+            borderWidth: 1,
+            callbacks: {
+              label: function(context) {
+                const label = context.dataset.label || '';
+                const value = context.parsed.y;
+                return label + ': $' + value.toFixed(2);
+              }
+            }
+          }
+        }
+      }
     });
 
     return () => {
@@ -393,66 +385,53 @@ export default function StockChart({ symbol, indicators, range, dataType, setDat
         chartInstance.current.destroy();
       }
     };
-  }, [chartData, indicators, chartType, symbol]);
+  }, [chartData, chartType, indicators]);
 
-  // Handle chart resize when full screen changes
-  useEffect(() => {
-    if (chartInstance.current) {
-      setTimeout(() => {
-        chartInstance.current.resize();
-      }, 100);
-    }
-  }, [isFullScreen]);
-
-  // RSI Chart
   const renderRSI = () => {
     if (!indicators.includes("RSI") || !chartData.length) return null;
 
-    const rsiValues = rsi(chartData, 14);
+    const rsiValues = rsi(chartData);
     const labels = chartData.map(item => new Date(item.timestamp).toLocaleDateString());
 
     return (
-      <div style={{ height: "150px", marginTop: "20px" }}>
-        <h4>RSI (14)</h4>
-        <canvas
-          ref={(canvas) => {
-            if (canvas) {
-              const ctx = canvas.getContext("2d");
-              if (window.rsiChart) window.rsiChart.destroy();
-              window.rsiChart = new Chart(ctx, {
-                type: "line",
-                data: {
-                  labels,
-                  datasets: [{
-                    label: "RSI",
-                    data: rsiValues,
-                    borderColor: "#dc2626",
-                    backgroundColor: "transparent",
-                    tension: 0.1
-                  }]
+      <div style={{ marginTop: "20px" }}>
+        <h4 style={{ margin: "0 0 10px 0", color: "#374151" }}>RSI (14)</h4>
+        <Chart
+          type="line"
+          data={{
+            labels: labels,
+            datasets: [{
+              label: "RSI",
+              data: rsiValues,
+              borderColor: "#8b5cf6",
+              backgroundColor: "transparent",
+              borderWidth: 2,
+              fill: false,
+              tension: 0.1
+            }]
+          }}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                display: false
+              },
+              y: {
+                min: 0,
+                max: 100,
+                grid: {
+                  color: '#e5e7eb'
                 },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    y: {
-                      min: 0,
-                      max: 100,
-                      grid: {
-                        color: (context) => {
-                          const value = context.tick.value;
-                          return value === 30 || value === 70 ? "#ef4444" : "#e5e7eb";
-                        }
-                      }
-                    }
-                  },
-                  plugins: {
-                    legend: {
-                      display: false
-                    }
-                  }
+                ticks: {
+                  color: '#6b7280'
                 }
-              });
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              }
             }
           }}
           width={400}
@@ -462,59 +441,73 @@ export default function StockChart({ symbol, indicators, range, dataType, setDat
     );
   };
 
-  // MACD Chart
   const renderMACD = () => {
     if (!indicators.includes("MACD") || !chartData.length) return null;
 
-    const macdData = macd(chartData, 12, 26, 9);
+    const macdData = macd(chartData);
     const labels = chartData.map(item => new Date(item.timestamp).toLocaleDateString());
 
     return (
-      <div style={{ height: "150px", marginTop: "20px" }}>
-        <h4>MACD</h4>
-        <canvas
-          ref={(canvas) => {
-            if (canvas) {
-              const ctx = canvas.getContext("2d");
-              if (window.macdChart) window.macdChart.destroy();
-              window.macdChart = new Chart(ctx, {
-                type: "line",
-                data: {
-                  labels,
-                  datasets: [
-                    {
-                      label: "MACD Line",
-                      data: macdData.macdLine,
-                      borderColor: "#2563eb",
-                      backgroundColor: "transparent",
-                      tension: 0.1
-                    },
-                    {
-                      label: "Signal Line",
-                      data: macdData.signalLine,
-                      borderColor: "#dc2626",
-                      backgroundColor: "transparent",
-                      tension: 0.1
-                    },
-                    {
-                      label: "Histogram",
-                      data: macdData.histogram,
-                      borderColor: "#059669",
-                      backgroundColor: "rgba(5, 150, 105, 0.3)",
-                      type: "bar"
-                    }
-                  ]
+      <div style={{ marginTop: "20px" }}>
+        <h4 style={{ margin: "0 0 10px 0", color: "#374151" }}>MACD</h4>
+        <Chart
+          type="line"
+          data={{
+            labels: labels,
+            datasets: [
+              {
+                label: "MACD Line",
+                data: macdData.macdLine,
+                borderColor: "#2563eb",
+                backgroundColor: "transparent",
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1
+              },
+              {
+                label: "Signal Line",
+                data: macdData.signalLine,
+                borderColor: "#ef4444",
+                backgroundColor: "transparent",
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1
+              },
+              {
+                label: "Histogram",
+                data: macdData.histogram,
+                backgroundColor: macdData.histogram.map(val => val >= 0 ? "rgba(34, 197, 94, 0.6)" : "rgba(239, 68, 68, 0.6)"),
+                borderColor: macdData.histogram.map(val => val >= 0 ? "#22c55e" : "#ef4444"),
+                borderWidth: 1,
+                type: "bar"
+              }
+            ]
+          }}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                display: false
+              },
+              y: {
+                grid: {
+                  color: '#e5e7eb'
                 },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      display: true
-                    }
-                  }
+                ticks: {
+                  color: '#6b7280'
                 }
-              });
+              }
+            },
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  color: '#374151',
+                  usePointStyle: true
+                }
+              }
             }
           }}
           width={400}
@@ -539,41 +532,6 @@ export default function StockChart({ symbol, indicators, range, dataType, setDat
         background: "#f8fafc",
         gap: "10px"
       }}>
-        {/* Data Type Selector */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontWeight: "500", color: "#374151" }}>Data:</span>
-          <div style={{ display: "flex", background: "white", borderRadius: "6px", border: "1px solid #d1d5db" }}>
-            <button
-              onClick={() => setDataType("historical")}
-              style={{
-                padding: "6px 12px",
-                border: "none",
-                background: dataType === "historical" ? "#2563eb" : "transparent",
-                color: dataType === "historical" ? "white" : "#374151",
-                cursor: "pointer",
-                fontSize: "12px",
-                borderRadius: dataType === "historical" ? "6px" : "0"
-              }}
-            >
-              Historical
-            </button>
-            <button
-              onClick={() => setDataType("simulated")}
-              style={{
-                padding: "6px 12px",
-                border: "none",
-                background: dataType === "simulated" ? "#2563eb" : "transparent",
-                color: dataType === "simulated" ? "white" : "#374151",
-                cursor: "pointer",
-                fontSize: "12px",
-                borderRadius: dataType === "simulated" ? "6px" : "0"
-              }}
-            >
-              Simulated
-            </button>
-          </div>
-        </div>
-
         {/* Data Source Indicator */}
         <div style={{ 
           display: "flex", 
