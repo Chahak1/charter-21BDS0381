@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ChartContainer from "./ChartContainer";
 import WatchlistPanel from "./WatchlistPanel";
 import StockStatsPanel from "./StockStatsPanel";
 import IndicatorSelector from "./IndicatorSelector";
+import axios from "axios";
 import "./App.css";
 
 export default function App() {
@@ -10,6 +11,27 @@ export default function App() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [indicators, setIndicators] = useState(["SMA", "EMA", "RSI", "MACD", "BB"]);
   const [range, setRange] = useState("1D");
+  const [availableSymbols, setAvailableSymbols] = useState([]);
+
+  useEffect(() => {
+    // Fetch available symbols and set default stock
+    const fetchSymbols = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/stocks/symbols');
+        const symbols = response.data.all || [];
+        setAvailableSymbols(symbols);
+        
+        // Set the first available symbol as default
+        if (symbols.length > 0 && !symbols.includes(selectedStock)) {
+          setSelectedStock(symbols[0]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch symbols:', error);
+      }
+    };
+
+    fetchSymbols();
+  }, []);
 
   const handleFullScreenToggle = () => {
     console.log("App: handleFullScreenToggle called, current isFullScreen:", isFullScreen);
@@ -72,7 +94,9 @@ export default function App() {
             border: "1px solid #d1d5db"
           }}>
             <span style={{ fontWeight: "bold", fontSize: "16px" }}>{selectedStock}</span>
-            <span style={{ color: "#10B981", fontSize: "14px" }}>+2.45%</span>
+            {availableSymbols.length > 0 && (
+              <span style={{ color: "#10B981", fontSize: "14px" }}>+2.45%</span>
+            )}
           </div>
         </div>
 
