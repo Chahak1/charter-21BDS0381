@@ -9,6 +9,8 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, se
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
+
+
   useEffect(() => {
     console.log("Fetching stock data for", symbol, "with range", range);
 
@@ -326,12 +328,8 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, se
 
   return (
     <div style={{ 
-      height: isFullScreen ? "100vh" : "100%", 
-      width: isFullScreen ? "100vw" : "100%",
-      position: isFullScreen ? "fixed" : "relative",
-      top: isFullScreen ? 0 : "auto",
-      left: isFullScreen ? 0 : "auto",
-      zIndex: isFullScreen ? 9999 : "auto",
+      height: "100%", 
+      width: "100%",
       backgroundColor: "white"
     }}>
       {/* Chart Controls */}
@@ -412,7 +410,7 @@ export default function StockChart({ symbol, indicators, range, isFullScreen, se
       </div>
 
       {/* Main Chart */}
-      <div style={{ height: isFullScreen ? "calc(100vh - 200px)" : "400px", padding: "20px" }}>
+      <div style={{ height: isFullScreen ? "calc(100vh - 200px)" : "400px", padding: "20px", flex: 1 }}>
         <canvas ref={chartRef} />
       </div>
 

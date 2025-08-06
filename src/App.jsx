@@ -8,10 +8,16 @@ export default function App() {
   const [selectedStock, setSelectedStock] = useState("AAPL");
   const [isFullScreen, setIsFullScreen] = useState(false);
 
+
+
   return (
     <div className="app-root" style={{display:"flex",height:"100vh"}}>
       <main style={{ flex: 1, display: "flex" }}>
-        <div style={{ flex: 3, flexDirection: "column" }}>
+        <div style={{ 
+          flex: isFullScreen ? 1 : 3, 
+          flexDirection: "column",
+          width: isFullScreen ? "100%" : "auto"
+        }}>
           <ChartContainer 
             selectedStock={selectedStock} 
             isFullScreen={isFullScreen}
@@ -19,7 +25,9 @@ export default function App() {
           />
         </div>
         {!isFullScreen && (
-          <aside style={{ flex: 1, minWidth: "340px", borderLeft: "1px solid #eee" }}>
+          <aside 
+            style={{ flex: 1, minWidth: "340px", borderLeft: "1px solid #eee" }}
+          >
             <WatchlistPanel onSelect={setSelectedStock} selected={selectedStock} />
             <StockStatsPanel symbol={selectedStock} />
           </aside>
