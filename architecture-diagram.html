@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Architecture Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .title {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+
+        .architecture-diagram {
+            position: relative;
+            width: 100%;
+            height: 800px;
+            background: #f8f9fa;
+            border: 3px solid #34495e;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .layer {
+            position: absolute;
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.8);
+            padding: 15px;
+        }
+
+        .client-layer {
+            top: 20px;
+            left: 20px;
+            width: 200px;
+            height: 180px;
+            background: rgba(52, 152, 219, 0.1);
+            border-color: #3498db;
+        }
+
+        .frontend-layer {
+            top: 20px;
+            left: 250px;
+            width: 300px;
+            height: 350px;
+            background: rgba(241, 196, 15, 0.1);
+            border-color: #f1c40f;
+        }
+
+        .backend-layer {
+            top: 20px;
+            left: 580px;
+            width: 280px;
+            height: 350px;
+            background: rgba(155, 89, 182, 0.1);
+            border-color: #9b59b6;
+        }
+
+        .blockchain-layer {
+            top: 400px;
+            left: 250px;
+            width: 300px;
+            height: 180px;
+            background: rgba(230, 126, 34, 0.1);
+            border-color: #e67e22;
+        }
+
+        .data-layer {
+            top: 400px;
+            left: 580px;
+            width: 280px;
+            height: 180px;
+            background: rgba(46, 204, 113, 0.1);
+            border-color: #2ecc71;
+        }
+
+        .external-layer {
+            top: 20px;
+            left: 890px;
+            width: 200px;
+            height: 350px;
+            background: rgba(231, 76, 60, 0.1);
+            border-color: #e74c3c;
+        }
+
+        .monitoring-layer {
+            top: 400px;
+            left: 890px;
+            width: 200px;
+            height: 180px;
+            background: rgba(26, 188, 156, 0.1);
+            border-color: #1abc9c;
+        }
+
+        .layer-title {
+            font-weight: bold;
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .component {
+            background: white;
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 8px;
+            margin: 5px 0;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .component:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .component.client { border-color: #3498db; color: #3498db; }
+        .component.frontend { border-color: #f39c12; color: #f39c12; }
+        .component.backend { border-color: #9b59b6; color: #9b59b6; }
+        .component.blockchain { border-color: #e67e22; color: #e67e22; }
+        .component.data { border-color: #27ae60; color: #27ae60; }
+        .component.external { border-color: #e74c3c; color: #e74c3c; }
+        .component.monitoring { border-color: #16a085; color: #16a085; }
+
+        .icon {
+            font-size: 18px;
+            margin-right: 5px;
+        }
+
+        .connection {
+            position: absolute;
+            background: #34495e;
+            z-index: 1;
+        }
+
+        .connection.horizontal {
+            height: 3px;
+        }
+
+        .connection.vertical {
+            width: 3px;
+        }
+
+        .connection.dashed {
+            background: repeating-linear-gradient(
+                to right,
+                #34495e,
+                #34495e 10px,
+                transparent 10px,
+                transparent 20px
+            );
+        }
+
+        .arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            z-index: 2;
+        }
+
+        .arrow.right {
+            border-left: 8px solid #34495e;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+
+        .arrow.down {
+            border-top: 8px solid #34495e;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+        }
+
+        .legend {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid;
+        }
+
+        @media (max-width: 1200px) {
+            .architecture-diagram {
+                height: 1000px;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Stock Trading Platform</h1>
+        <p class="subtitle">System Architecture with Blockchain Integration</p>
+        
+        <div class="architecture-diagram">
+            <!-- Client Layer -->
+            <div class="layer client-layer">
+                <div class="layer-title">Client Layer</div>
+                <div class="component client">
+                    <span class="icon">🖥️</span>
+                    Web Browser
+                </div>
+                <div class="component client">
+                    <span class="icon">📱</span>
+                    Mobile App
+                </div>
+                <div class="component client">
+                    <span class="icon">⚖️</span>
+                    Load Balancer
+                </div>
+            </div>
+
+            <!-- Frontend Layer -->
+            <div class="layer frontend-layer">
+                <div class="layer-title">Frontend Services</div>
+                <div class="component frontend">
+                    <span class="icon">⚛️</span>
+                    React App
+                </div>
+                <div class="component frontend">
+                    <span class="icon">📊</span>
+                    Sidebar
+                </div>
+                <div class="component frontend">
+                    <span class="icon">📈</span>
+                    Chart Container
+                </div>
+                <div class="component frontend">
+                    <span class="icon">👁️</span>
+                    Watchlist Panel
+                </div>
+                <div class="component frontend">
+                    <span class="icon">📋</span>
+                    Stats Panel
+                </div>
+                <div class="component frontend">
+                    <span class="icon">🔢</span>
+                    Indicators
+                </div>
+            </div>
+
+            <!-- Backend Layer -->
+            <div class="layer backend-layer">
+                <div class="layer-title">Backend Services</div>
+                <div class="component backend">
+                    <span class="icon">🔗</span>
+                    REST API
+                </div>
+                <div class="component backend">
+                    <span class="icon">🔄</span>
+                    WebSocket
+                </div>
+                <div class="component backend">
+                    <span class="icon">📈</span>
+                    Stock Service
+                </div>
+                <div class="component backend">
+                    <span class="icon">📊</span>
+                    Chart Library
+                </div>
+                <div class="component backend">
+                    <span class="icon">🔄</span>
+                    Data Formatter
+                </div>
+            </div>
+
+            <!-- Blockchain Layer -->
+            <div class="layer blockchain-layer">
+                <div class="layer-title">Blockchain Layer</div>
+                <div class="component blockchain">
+                    <span class="icon">⛑️</span>
+                    Hardhat Network
+                </div>
+                <div class="component blockchain">
+                    <span class="icon">🔐</span>
+                    Signature Verifier
+                </div>
+                <div class="component blockchain">
+                    <span class="icon">🔒</span>
+                    Lock Contract
+                </div>
+                <div class="component blockchain">
+                    <span class="icon">🌐</span>
+                    Web3 Provider
+                </div>
+            </div>
+
+            <!-- Data Layer -->
+            <div class="layer data-layer">
+                <div class="layer-title">Data Services</div>
+                <div class="component data">
+                    <span class="icon">📚</span>
+                    Historical Data
+                </div>
+                <div class="component data">
+                    <span class="icon">🎯</span>
+                    Simulated Data
+                </div>
+                <div class="component data">
+                    <span class="icon">💾</span>
+                    Cache Layer
+                </div>
+            </div>
+
+            <!-- External Services -->
+            <div class="layer external-layer">
+                <div class="layer-title">External APIs</div>
+                <div class="component external">
+                    <span class="icon">📡</span>
+                    Market Data
+                </div>
+                <div class="component external">
+                    <span class="icon">💰</span>
+                    Price Feed
+                </div>
+                <div class="component external">
+                    <span class="icon">📰</span>
+                    News API
+                </div>
+                <div class="component external">
+                    <span class="icon">📊</span>
+                    Analytics
+                </div>
+            </div>
+
+            <!-- Monitoring Layer -->
+            <div class="layer monitoring-layer">
+                <div class="layer-title">Monitoring</div>
+                <div class="component monitoring">
+                    <span class="icon">📝</span>
+                    Logs
+                </div>
+                <div class="component monitoring">
+                    <span class="icon">📊</span>
+                    Metrics
+                </div>
+                <div class="component monitoring">
+                    <span class="icon">🚨</span>
+                    Alerts
+                </div>
+            </div>
+
+            <!-- Connections -->
+            <div class="connection horizontal" style="top: 110px; left: 220px; width: 30px;"></div>
+            <div class="arrow right" style="top: 107px; left: 248px;"></div>
+            
+            <div class="connection horizontal" style="top: 200px; left: 550px; width: 30px;"></div>
+            <div class="arrow right" style="top: 197px; left: 578px;"></div>
+            
+            <div class="connection horizontal dashed" style="top: 490px; left: 550px; width: 30px;"></div>
+            <div class="arrow right" style="top: 487px; left: 578px;"></div>
+            
+            <div class="connection horizontal" style="top: 200px; left: 860px; width: 30px;"></div>
+            <div class="arrow right" style="top: 197px; left: 888px;"></div>
+            
+            <div class="connection vertical" style="top: 370px; left: 400px; height: 30px;"></div>
+            <div class="arrow down" style="top: 398px; left: 395px;"></div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color client" style="background: rgba(52, 152, 219, 0.3); border-color: #3498db;"></div>
+                <span>Client Layer</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color frontend" style="background: rgba(241, 196, 15, 0.3); border-color: #f1c40f;"></div>
+                <span>Frontend</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color backend" style="background: rgba(155, 89, 182, 0.3); border-color: #9b59b6;"></div>
+                <span>Backend</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color blockchain" style="background: rgba(230, 126, 34, 0.3); border-color: #e67e22;"></div>
+                <span>Blockchain</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color data" style="background: rgba(46, 204, 113, 0.3); border-color: #2ecc71;"></div>
+                <span>Data Layer</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color external" style="background: rgba(231, 76, 60, 0.3); border-color: #e74c3c;"></div>
+                <span>External APIs</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color monitoring" style="background: rgba(26, 188, 156, 0.3); border-color: #1abc9c;"></div>
+                <span>Monitoring</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add interactive tooltips
+        document.querySelectorAll('.component').forEach(component => {
+            component.addEventListener('mouseenter', function(e) {
+                // Add hover effects and potential tooltip functionality
+                this.style.transform = 'translateY(-3px) scale(1.05)';
+            });
+            
+            component.addEventListener('mouseleave', function(e) {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // Add click functionality to show component details
+        document.querySelectorAll('.component').forEach(component => {
+            component.addEventListener('click', function(e) {
+                const componentName = this.textContent.trim();
+                alert(`Component: ${componentName}\n\nClick to expand details about this system component.`);
+            });
+        });
+    </script>
+</body>
+</html>
