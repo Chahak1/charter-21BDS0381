@@ -62,7 +62,7 @@ graph TB
         MARKET_API[📡 Market Data API]
         PRICE_FEED[💰 Real-time Price Feed]
         NEWS_API[📰 News API]
-        AI_MODEL[🧠 GenAI Model (OpenAI/etc)]
+        AI_MODEL[🧠 GenAI Model - OpenAI]
         BROKER_API[🏦 Broker Integration]
     end
 
