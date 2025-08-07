@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import StockChart from "./StockChart";
+import SimpleStockChart from "./SimpleStockChart";
+import DataTest from "./DataTest";
 import IndicatorSelector from "./IndicatorSelector";
 
 export default function ChartContainer({ selectedStock }) {
@@ -25,7 +27,11 @@ export default function ChartContainer({ selectedStock }) {
         </div>
       </div>
       <div className="chart-wrapper">
+        <DataTest symbol={selectedStock} />
         <StockChart symbol={selectedStock} indicators={indicators} range={range} />
+        <hr style={{margin: '20px 0'}} />
+        <h4>Simple Chart Test:</h4>
+        <SimpleStockChart symbol={selectedStock} range={range} />
       </div>
       <IndicatorSelector indicators={indicators} setIndicators={setIndicators} />
     </div>

@@ -38,31 +38,38 @@ export default function StockChart({ symbol, range, indicators = [] }) {
         }
 
         // Filter data based on selected range
-        const now = new Date();
+        // Since our sample data is from Jan 1, 2024, we'll use that as the base date
+        const dataStartDate = new Date('2024-01-01');
         let startTime;
 
         switch (range) {
           case "1D":
-            startTime = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000);
+            // Show all data for 1D since we only have intraday data
+            startTime = null;
             break;
           case "1W":
-            startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            startTime = new Date(dataStartDate.getTime() - 7 * 24 * 60 * 60 * 1000);
             break;
           case "1M":
-            startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            startTime = new Date(dataStartDate.getTime() - 30 * 24 * 60 * 60 * 1000);
             break;
           case "3M":
-            startTime = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            startTime = new Date(dataStartDate.getTime() - 90 * 24 * 60 * 60 * 1000);
             break;
           case "1Y":
-            startTime = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            startTime = new Date(dataStartDate.getTime() - 365 * 24 * 60 * 60 * 1000);
             break;
+          case "ALL":
           default:
             startTime = null;
         }
 
         if (startTime) {
+          console.log("Filtering data from:", startTime, "Data before filter:", data.length);
           data = data.filter((item) => new Date(item.timestamp) >= startTime);
+          console.log("Data after filter:", data.length);
+        } else {
+          console.log("No time filtering applied, showing all data:", data.length);
         }
 
         // Process data for chart
@@ -139,8 +146,18 @@ export default function StockChart({ symbol, range, indicators = [] }) {
     );
   }
 
+  console.log("Chart render - data length:", chartData.length);
+  console.log("Chart render - sample data:", chartData.slice(0, 2));
+
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div style={{ width: '100%', height: '100%', minHeight: '400px' }}>
+      {/* Debug info */}
+      <div style={{ padding: '10px', background: '#f0f0f0', fontSize: '12px', marginBottom: '10px' }}>
+        <strong>Debug:</strong> {chartData.length} data points | 
+        Range: {range} | 
+        Sample: {chartData.length > 0 ? `$${chartData[0]?.close} -> $${chartData[chartData.length-1]?.close}` : 'No data'}
+      </div>
+      
       <ResponsiveContainer width="100%" height="80%">
         <ComposedChart
           data={chartData}
@@ -151,13 +168,13 @@ export default function StockChart({ symbol, range, indicators = [] }) {
             dataKey="time"
             stroke="#64748b"
             fontSize={12}
-            interval="preserveStartEnd"
+            interval={Math.floor(chartData.length / 6)}
           />
           <YAxis 
             stroke="#64748b"
             fontSize={12}
-            domain={['dataMin - 5', 'dataMax + 5']}
-            tickFormatter={(value) => `$${value.toFixed(0)}`}
+            domain={['dataMin - 1', 'dataMax + 1']}
+            tickFormatter={(value) => `$${Number(value).toFixed(0)}`}
           />
           <Tooltip content={<CustomTooltip />} />
           
@@ -168,25 +185,28 @@ export default function StockChart({ symbol, range, indicators = [] }) {
             stroke="#3b82f6" 
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4, fill: '#3b82f6' }}
+            activeDot={{ r: 6, fill: '#3b82f6' }}
+            connectNulls={false}
           />
           
-          {/* High/Low area */}
+          {/* High/Low lines */}
           <Line 
             type="monotone" 
             dataKey="high" 
             stroke="#dc2626" 
             strokeWidth={1}
-            strokeDasharray="3 3"
+            strokeDasharray="2 2"
             dot={false}
+            connectNulls={false}
           />
           <Line 
             type="monotone" 
             dataKey="low" 
             stroke="#059669" 
             strokeWidth={1}
-            strokeDasharray="3 3"
+            strokeDasharray="2 2"
             dot={false}
+            connectNulls={false}
           />
         </ComposedChart>
       </ResponsiveContainer>
@@ -202,12 +222,12 @@ export default function StockChart({ symbol, range, indicators = [] }) {
             dataKey="time"
             stroke="#64748b"
             fontSize={10}
-            interval="preserveStartEnd"
+            interval={Math.floor(chartData.length / 6)}
           />
           <YAxis 
             stroke="#64748b"
             fontSize={10}
-            tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`}
+            tickFormatter={(value) => `${(Number(value) / 1000000).toFixed(1)}M`}
           />
           <Bar 
             dataKey="volume" 

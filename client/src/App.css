@@ -146,6 +146,20 @@ body {
   flex: 1;
   min-height: 400px;
   position: relative;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  overflow: visible;
+}
+
+/* Ensure Recharts containers are visible */
+.recharts-wrapper {
+  background: white !important;
+}
+
+.recharts-surface {
+  background: white !important;
 }
 
 /* Watchlist Panel */
